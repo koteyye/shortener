@@ -30,11 +30,11 @@ func (s ShortenerService) LongURL(shortURL string) (string, error) {
 func (s ShortenerService) ShortURL(url string) (string, error) {
 	var res string
 	if res = hashString(url); res == "" {
-		return "", errors.New("Не удалось сократить")
+		return "", errors.New("не удалось сократить")
 	}
 	ok, _ := s.storage.AddURL(res, url)
 	if !ok {
-		return "", errors.New("Говно")
+		return "", errors.New("говно")
 	}
 	urlRes := "http://localhost:8080/" + res
 	return urlRes, nil
