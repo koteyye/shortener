@@ -26,7 +26,10 @@ func (h Handlers) shortenerURL(res http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case http.MethodPost:
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(req.Body)
+		_, err := buf.ReadFrom(req.Body)
+		if err != nil {
+			newResponse(res, http.StatusBadRequest, "не удалось получить значение запроса")
+		}
 		respBytes := buf.String()
 
 		result, err := h.services.ShortURL(respBytes)
