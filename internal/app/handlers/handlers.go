@@ -42,9 +42,10 @@ func (h Handlers) shortenerURL(res http.ResponseWriter, req *http.Request) {
 		if id := strings.TrimLeft(url, "/"); id != "" {
 			resURL, err := h.services.LongURL(id)
 			if err != nil {
-				newResponse(res, http.StatusBadRequest, "нет такой ссылки")
+				newResponse(res, http.StatusBadRequest, err.Error())
+			} else {
+				http.Redirect(res, req, resURL, http.StatusTemporaryRedirect)
 			}
-			newResponse(res, http.StatusTemporaryRedirect, "Location: "+resURL)
 		} else {
 			newResponse(res, http.StatusBadRequest, "в запросе нет сокращенной ссылки")
 		}
