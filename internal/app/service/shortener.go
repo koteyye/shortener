@@ -12,15 +12,15 @@ const solt = "jifo4j0f9jf09djsa0f92039r32fj09sdjfg09ewjg09ewgj_"
 const soltLen = 20
 
 type ShortenerService struct {
-	storage storage.UrlStorage
+	storage storage.URLStorage
 }
 
-func NewShortenerService(storage storage.UrlStorage) *ShortenerService {
+func NewShortenerService(storage storage.URLStorage) *ShortenerService {
 	return &ShortenerService{storage: storage}
 }
 
 func (s ShortenerService) LongURL(shortURL string) (string, error) {
-	res, err := s.storage.GetUrl(shortURL)
+	res, err := s.storage.GetURL(shortURL)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func (s ShortenerService) ShortURL(url string) (string, error) {
 	if res = hashString(url); res == "" {
 		return "", errors.New("Не удалось сократить")
 	}
-	ok, _ := s.storage.AddUrl(res, url)
+	ok, _ := s.storage.AddURL(res, url)
 	if !ok {
 		return "", errors.New("Говно")
 	}

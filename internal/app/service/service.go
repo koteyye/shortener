@@ -11,8 +11,8 @@ type Service struct {
 	Shortener
 }
 
-func NewService(storage *storage.UrlHandler) *Service {
+func NewService(storage *storage.URLHandler) *Service {
 	return &Service{
-		Shortener: NewShortenerService(storage.UrlStorage),
+		Shortener: NewShortenerService(storage.URLStorage),
 	}
 }

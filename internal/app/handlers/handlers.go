@@ -38,17 +38,17 @@ func (h Handlers) shortenerURL(res http.ResponseWriter, req *http.Request) {
 	case http.MethodGet:
 		url := req.URL.String()
 		if id := strings.TrimLeft(url, "/"); id != "" {
-			resUrl, err := h.services.LongURL(id)
+			resURL, err := h.services.LongURL(id)
 			if err != nil {
-				newResponse(res, http.StatusBadRequest, "Нет такой ссылки")
+				newResponse(res, http.StatusBadRequest, "нет такой ссылки")
 			}
-			newResponse(res, http.StatusTemporaryRedirect, resUrl)
+			newResponse(res, http.StatusTemporaryRedirect, resURL)
 		} else {
-			newResponse(res, http.StatusBadRequest, "В запросе нет сокращенной ссылки")
+			newResponse(res, http.StatusBadRequest, "в запросе нет сокращенной ссылки")
 		}
 
 	default:
-		newResponse(res, http.StatusBadRequest, "Не тот метод")
+		newResponse(res, http.StatusBadRequest, "не тот метод")
 	}
 }
 

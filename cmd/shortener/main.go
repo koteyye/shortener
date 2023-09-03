@@ -11,7 +11,7 @@ import (
 func main() {
 
 	//init internal
-	storages := storage.NewUrlHandler()
+	storages := storage.NewURLHandle()
 	services := service.NewService(storages)
 	handler := handlers.NewHandlers(services)
 
