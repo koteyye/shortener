@@ -18,7 +18,6 @@ func NewHandlers(services *service.Service) *Handlers {
 func (h Handlers) InitRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", h.shortenerURL)
-	mux.HandleFunc("/miniURL", h.miniURL)
 	return mux
 }
 
@@ -50,10 +49,4 @@ func (h Handlers) shortenerURL(res http.ResponseWriter, req *http.Request) {
 	default:
 		newResponse(res, http.StatusBadRequest, "не тот метод")
 	}
-}
-
-func (h Handlers) miniURL(res http.ResponseWriter, req *http.Request) {
-
-	newResponse(res, http.StatusBadRequest, "gg")
-
 }
