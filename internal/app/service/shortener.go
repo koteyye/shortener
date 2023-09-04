@@ -25,8 +25,7 @@ func (s ShortenerService) LongURL(shortURL string) (string, error) {
 }
 
 func (s ShortenerService) ShortURL(url string) (string, error) {
-	var res string
-	res = generateUnitKey()
+	res := generateUnitKey()
 	ok, _ := s.storage.AddURL(res, url)
 	if !ok {
 		return "", errors.New("не удалось запись значение в хранилище")
