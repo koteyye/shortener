@@ -34,7 +34,7 @@ func (s ShortenerService) ShortURL(url string) (string, error) {
 	}
 	ok, _ := s.storage.AddURL(res, url)
 	if !ok {
-		return "", errors.New("говно")
+		return "", errors.New("не удалось запись значение в хранилище")
 	}
 	urlRes := "http://localhost:8080/" + res
 	return urlRes, nil
