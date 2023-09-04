@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"time"
@@ -26,10 +25,7 @@ func (s ShortenerService) LongURL(shortURL string) (string, error) {
 
 func (s ShortenerService) ShortURL(url string) (string, error) {
 	res := generateUnitKey()
-	ok, _ := s.storage.AddURL(res, url)
-	if !ok {
-		return "", errors.New("не удалось запись значение в хранилище")
-	}
+	s.storage.AddURL(res, url)
 	urlRes := "http://localhost:8080/" + res
 	return urlRes, nil
 }

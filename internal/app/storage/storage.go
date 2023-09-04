@@ -1,9 +1,12 @@
 package storage
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type URLStorage interface {
-	AddURL(string, string) (bool, error)
+	AddURL(string, string)
 	GetURL(string) (string, error)
 }
 
@@ -12,27 +15,26 @@ type URLHandler struct {
 }
 
 type URLMap struct {
-	storage map[string]string
+	storage sync.Map
 }
 
 func NewURLHandle() *URLHandler {
 	urlHandler := &URLHandler{
 		&URLMap{
-			storage: make(map[string]string),
+			storage: sync.Map{},
 		},
 	}
 	return urlHandler
 }
 
-func (u URLMap) AddURL(k, s string) (bool, error) {
-	u.storage[k] = s
-	return true, nil
+func (u *URLMap) AddURL(k, s string) {
+	u.storage.Store(k, s)
 }
 
-func (u URLMap) GetURL(k string) (string, error) {
-	url, ok := u.storage[k]
+func (u *URLMap) GetURL(k string) (string, error) {
+	url, ok := u.storage.Load(k)
 	if !ok {
 		return "", errors.New("нет такого значения")
 	}
-	return url, nil
+	return url.(string), nil
 }
