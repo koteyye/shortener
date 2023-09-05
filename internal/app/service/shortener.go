@@ -29,7 +29,7 @@ func (s ShortenerService) ShortURL(url string) (string, error) {
 	if url == "" {
 		return "", errors.New("не указана ссылка для сокращения")
 	}
-	if partURL, _ := regexp.Match(`(http)`, []byte(url)); partURL != true {
+	if partURL, _ := regexp.Match(`(http)`, []byte(url)); !partURL {
 		return "", errors.New("ссылка должна начинаться с протокола")
 	}
 
