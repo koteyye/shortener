@@ -88,7 +88,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 				assert.Equal(t, test.want.locationHeader, resultGET.Header.Get("Location"))
 			} else {
 				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
-				assert.Error(t, test.want.wantErr, body)
+				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 			}
 		})
 	}
