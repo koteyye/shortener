@@ -2,8 +2,10 @@ package service
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/koteyye/shortener/internal/app/storage"
+	"regexp"
 	"time"
 )
 
@@ -24,6 +26,13 @@ func (s ShortenerService) LongURL(shortURL string) (string, error) {
 }
 
 func (s ShortenerService) ShortURL(url string) (string, error) {
+	if url == "" {
+		return "", errors.New("не указана ссылка для сокращения")
+	}
+	if val, _ := regexp.Match(`(http)`, []byte(url)); val != true {
+		return "", errors.New("ссылка должна начинаться с протокола")
+	}
+
 	res := generateUnitKey()
 	s.storage.AddURL(res, url)
 	urlRes := "http://localhost:8080/" + res

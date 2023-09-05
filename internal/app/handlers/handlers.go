@@ -17,11 +17,11 @@ func NewHandlers(services *service.Service) *Handlers {
 
 func (h Handlers) InitRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", h.shortenerURL)
+	mux.HandleFunc("/", h.ShortenerURL)
 	return mux
 }
 
-func (h Handlers) shortenerURL(res http.ResponseWriter, req *http.Request) {
+func (h Handlers) ShortenerURL(res http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case http.MethodPost:
