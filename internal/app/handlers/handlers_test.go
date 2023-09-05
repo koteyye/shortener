@@ -71,7 +71,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			h.ShortenerURL(w, request)
 
 			result := w.Result()
-
+			defer result.Body.Close()
 			//Преобразуем тело для проверки
 			body, _ := io.ReadAll(result.Body)
 
@@ -84,6 +84,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 				wGET := httptest.NewRecorder()
 				h.ShortenerURL(wGET, requestGET)
 				resultGET := wGET.Result()
+				defer resultGET.Body.Close()
 				assert.Equal(t, test.want.statusCodeGET, resultGET.StatusCode)
 				assert.Equal(t, test.want.locationHeader, resultGET.Header.Get("Location"))
 			} else {

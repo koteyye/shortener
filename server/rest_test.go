@@ -37,6 +37,7 @@ func TestServer_Run(t *testing.T) {
 	defer s.Shutdown(context.Background())
 	r, _ := http.NewRequest(http.MethodGet, "http://localhost:8081", nil)
 	res, err := http.DefaultClient.Do(r)
+	defer res.Body.Close()
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 	}
