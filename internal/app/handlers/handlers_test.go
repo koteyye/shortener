@@ -78,7 +78,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			if result.StatusCode == 201 {
 				regCheck, _ := regexp.Match(`(http://localhost:8080/)`, body)
 				assert.Equal(t, true, regCheck)
-				shortURL = strings.TrimLeft(string(body), HostName)
+				shortURL = strings.TrimPrefix(string(body), HostName)
 				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
 				requestGET := httptest.NewRequest(http.MethodGet, test.request+shortURL, nil)
 				wGET := httptest.NewRecorder()
