@@ -5,5 +5,5 @@ import (
 )
 
 func newResponse(c *gin.Context, statusCode int, message error) {
-	c.AbortWithError(statusCode, message)
+	c.String(statusCode, message.Error())
 }

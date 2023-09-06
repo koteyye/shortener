@@ -40,6 +40,8 @@ func (h Handlers) LongerURL(c *gin.Context) {
 	resURL, err := h.services.LongURL(id)
 	if err != nil {
 		newResponse(c, http.StatusBadRequest, err)
+	} else {
+		c.Redirect(http.StatusTemporaryRedirect, resURL)
 	}
-	c.Redirect(http.StatusTemporaryRedirect, resURL)
+
 }

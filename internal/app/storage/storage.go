@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+var ErrNotFound = errors.New("не найдено такого значения")
+
 type URLStorage interface {
 	AddURL(string, string)
 	GetURL(string) (string, error)
@@ -33,7 +35,7 @@ func (u *URLMap) AddURL(k, s string) {
 func (u *URLMap) GetURL(k string) (string, error) {
 	url, ok := u.storage.Load(k)
 	if !ok {
-		return "", errors.New("нет такого значения")
+		return "", ErrNotFound
 	}
 	return url.(string), nil
 }

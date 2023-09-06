@@ -52,7 +52,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 		{
 			name:        "invalid URL",
 			request:     "/",
-			requestBody: strings.NewReader("ofjewpogjkewpo"),
+			requestBody: strings.NewReader("practicum.yandex.ru/"),
 			want: want{
 				statusCodePOST: 400,
 				wantErr:        service.ErrInvalidRequestBodyURL,
@@ -94,5 +94,63 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 			}
 		})
+	}
+}
+
+func TestHandlers_LongerURL(t *testing.T) {
+	type want struct {
+		statusCode     int
+		locationHeader string
+		wantErr        error
+	}
+	tests := []struct {
+		name   string
+		params string
+		want
+	}{
+		{
+			name:   "success",
+			params: "MTY5NDAzNTIwNjI4NjQyNzIwOQ==",
+			want: want{
+				statusCode:     307,
+				locationHeader: "https://practicum.yandex.ru/",
+			},
+		},
+		{
+			name:   "invalid param",
+			params: "MTY5NDAzNTIwNjI4NjQyNzIds==",
+			want: want{
+				statusCode: 400,
+				wantErr:    storage.ErrNotFound,
+			},
+		},
+		{
+			name: "not params",
+			want: want{
+				statusCode: 400,
+			},
+		},
+	}
+	storages := storage.NewURLHandle()
+	services := service.NewService(storages)
+	h := NewHandlers(services)
+
+	//Предварительно добавляется валидное значение в Storage
+	storages.AddURL("MTY5NDAzNTIwNjI4NjQyNzIwOQ==", "https://practicum.yandex.ru/")
+	for _, test := range tests {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, "/"+test.params, nil)
+		c.AddParam("id", test.params)
+		h.LongerURL(c)
+		result := w.Result()
+		defer result.Body.Close()
+		assert.Equal(t, test.statusCode, result.StatusCode)
+		if test.statusCode == 200 {
+			assert.Equal(t, test.locationHeader, result.Header.Get("Location"))
+		}
+		if test.wantErr != nil {
+			assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
+		}
 	}
 }
