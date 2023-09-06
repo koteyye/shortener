@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
@@ -63,12 +64,11 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 	h := NewHandlers(services)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var shortURL string
-
 			//Тест POST
-			request := httptest.NewRequest(http.MethodPost, test.request, test.requestBody)
 			w := httptest.NewRecorder()
-			h.ShortenerURL(w, request)
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest(http.MethodPost, test.request, test.requestBody)
+			h.ShortenerURL(c)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -78,11 +78,13 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			if result.StatusCode == 201 {
 				regCheck, _ := regexp.Match(`(http://localhost:8080/)`, body)
 				assert.Equal(t, true, regCheck)
-				shortURL = strings.TrimPrefix(string(body), HostName)
+				shortURL := strings.TrimPrefix(string(body), HostName)
 				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
-				requestGET := httptest.NewRequest(http.MethodGet, test.request+shortURL, nil)
 				wGET := httptest.NewRecorder()
-				h.ShortenerURL(wGET, requestGET)
+				c2, _ := gin.CreateTestContext(wGET)
+				c2.Request = httptest.NewRequest(http.MethodGet, test.request, nil)
+				c2.AddParam("id", shortURL)
+				h.LongerURL(c2)
 				resultGET := wGET.Result()
 				defer resultGET.Body.Close()
 				assert.Equal(t, test.want.statusCodeGET, resultGET.StatusCode)
