@@ -1,0 +1,7 @@
+server:
+  base_url: /
+  listen: 8080
+
+shortener:
+  base_url: /
+  listen: 8080
