@@ -42,7 +42,7 @@ func (s ShortenerService) ShortURL(url string) (string, error) {
 
 	res := generateUnitKey()
 	s.storage.AddURL(res, url)
-	urlRes := s.shortener.Listen + res
+	urlRes := s.shortener.Listen + "/" + res
 	return urlRes, nil
 }
 
