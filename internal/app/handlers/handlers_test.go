@@ -18,11 +18,11 @@ import (
 var cfg = config.Config{
 	Server: &config.Server{
 		BaseURL: "/",
-		Listen:  "8080",
+		Listen:  "localhost:8080",
 	},
 	Shortener: &config.Shortener{
 		BaseURL: "/",
-		Listen:  "8080",
+		Listen:  "http://localhost:8080",
 	},
 }
 
@@ -73,7 +73,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 	storages := storage.NewURLHandle()
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services)
-	hostName := "http://localhost:" + cfg.Shortener.Listen + cfg.Shortener.BaseURL
+	hostName := cfg.Shortener.Listen + cfg.Shortener.BaseURL
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			//Тест POST

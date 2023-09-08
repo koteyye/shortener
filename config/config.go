@@ -2,9 +2,6 @@ package config
 
 import (
 	"flag"
-	"gopkg.in/yaml.v3"
-	"os"
-	"path/filepath"
 )
 
 type Config struct {
@@ -25,23 +22,19 @@ type Shortener struct {
 func GetConfig() (*Config, error) {
 	var flagRunAddr string
 	var flagShortenerAddr string
-	var configPath string
 	flag.StringVar(&flagRunAddr, "a", "", "address and port to run server")
 	flag.StringVar(&flagShortenerAddr, "b", "", "address and port to shortener")
-	flag.StringVar(&configPath, "config", "", "used for set path to config file")
 	flag.Parse()
-	if configPath == "" {
-		configPath = "config/config.yaml"
-	}
 
-	var cfg Config
-	data, err := os.ReadFile(filepath.Clean(configPath))
-	if err != nil {
-		return nil, err
-	}
-	err = yaml.Unmarshal(data, &cfg)
-	if err != nil {
-		return nil, err
+	cfg := &Config{
+		Server: &Server{
+			BaseURL: "/",
+			Listen:  "localhost:8080",
+		},
+		Shortener: &Shortener{
+			BaseURL: "/",
+			Listen:  "localhost:8080",
+		},
 	}
 
 	if flagRunAddr != "" {
@@ -51,5 +44,5 @@ func GetConfig() (*Config, error) {
 		cfg.Shortener.Listen = flagShortenerAddr
 	}
 
-	return &cfg, err
+	return cfg, nil
 }

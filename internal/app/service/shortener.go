@@ -42,7 +42,7 @@ func (s ShortenerService) ShortURL(url string) (string, error) {
 
 	res := generateUnitKey()
 	s.storage.AddURL(res, url)
-	urlRes := "http://localhost:" + s.shortener.Listen + s.shortener.BaseURL + res
+	urlRes := s.shortener.Listen + s.shortener.BaseURL + res
 	return urlRes, nil
 }
 
