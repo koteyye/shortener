@@ -72,7 +72,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 	storages := storage.NewURLHandle()
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services)
-	hostName := cfg.Shortener.Listen
+	hostName := cfg.Shortener.Listen + "/"
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			//Тест POST
