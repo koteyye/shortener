@@ -33,7 +33,7 @@ func GetConfig() (*Config, error) {
 		},
 		Shortener: &Shortener{
 			BaseURL: "/",
-			Listen:  "localhost:8080",
+			Listen:  "http://localhost:8080",
 		},
 	}
 
