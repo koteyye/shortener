@@ -1,6 +1,9 @@
 package service
 
-import "github.com/koteyye/shortener/internal/app/storage"
+import (
+	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/storage"
+)
 
 type Shortener interface {
 	ShortURL(url string) (string, error)
@@ -11,8 +14,8 @@ type Service struct {
 	Shortener
 }
 
-func NewService(storage *storage.URLHandler) *Service {
+func NewService(storage *storage.URLHandler, shortener *config.Shortener) *Service {
 	return &Service{
-		Shortener: NewShortenerService(storage.URLStorage),
+		Shortener: NewShortenerService(storage.URLStorage, shortener),
 	}
 }

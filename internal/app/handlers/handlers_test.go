@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
@@ -13,10 +14,19 @@ import (
 	"testing"
 )
 
-const HostName = "http://localhost:8080/"
+// Тестовый конфиг
+var cfg = config.Config{
+	Server: &config.Server{
+		BaseURL: "/",
+		Listen:  "localhost:8080",
+	},
+	Shortener: &config.Shortener{
+		BaseURL: "/",
+		Listen:  "http://localhost:8080",
+	},
+}
 
 func TestHandlers_ShortenerURL(t *testing.T) {
-
 	type want struct {
 		statusCodePOST int
 		statusCodeGET  int
@@ -59,9 +69,11 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			},
 		},
 	}
+
 	storages := storage.NewURLHandle()
-	services := service.NewService(storages)
+	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services)
+	hostName := cfg.Shortener.Listen + cfg.Shortener.BaseURL
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			//Тест POST
@@ -76,9 +88,9 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			body, _ := io.ReadAll(result.Body)
 
 			if result.StatusCode == 201 {
-				regCheck, _ := regexp.Match(`(http://localhost:8080/)`, body)
+				regCheck, _ := regexp.Match(hostName, body)
 				assert.Equal(t, true, regCheck)
-				shortURL := strings.TrimPrefix(string(body), HostName)
+				shortURL := strings.TrimPrefix(string(body), hostName)
 				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
 				wGET := httptest.NewRecorder()
 				c2, _ := gin.CreateTestContext(wGET)
@@ -132,7 +144,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 		},
 	}
 	storages := storage.NewURLHandle()
-	services := service.NewService(storages)
+	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services)
 
 	//Предварительно добавляется валидное значение в Storage

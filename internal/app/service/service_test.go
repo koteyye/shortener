@@ -1,10 +1,17 @@
 package service
 
 import (
+	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+// Тестовый конфиг для сокращения ссылок
+var shortenerCfg = &config.Shortener{
+	BaseURL: "/",
+	Listen:  "http://localhost:8080",
+}
 
 func TestShortenerService_LongURL(t *testing.T) {
 	tests := []struct {
@@ -25,7 +32,7 @@ func TestShortenerService_LongURL(t *testing.T) {
 	}
 
 	storages := storage.NewURLHandle()
-	s := NewService(storages)
+	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			//Добавляем в маппу тестовую ссылку
@@ -63,7 +70,7 @@ func TestShortenerService_ShortURL(t *testing.T) {
 		},
 	}
 	storages := storage.NewURLHandle()
-	s := NewService(storages)
+	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			url, err := s.ShortURL(test.value)

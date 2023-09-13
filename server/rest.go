@@ -9,9 +9,9 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func (s *Server) Run(port string, handler http.Handler) error {
+func (s *Server) Run(host string, handler http.Handler) error {
 	s.httpServer = &http.Server{
-		Addr:    ":" + port,
+		Addr:    host,
 		Handler: handler,
 	}
 	return s.httpServer.ListenAndServe()

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/handlers"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
@@ -10,13 +11,18 @@ import (
 
 func main() {
 
+	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Fatalf("Get config: %v", err)
+	}
+
 	//init internal
 	storages := storage.NewURLHandle()
-	services := service.NewService(storages)
+	services := service.NewService(storages, cfg.Shortener)
 	handler := handlers.NewHandlers(services)
 
 	restServer := new(server.Server)
-	if err := restServer.Run("8080", handler.InitRoutes()); err != nil {
+	if err := restServer.Run(cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
 		log.Fatalf("Error occuped while runing Rest server :%s", err.Error())
 	}
 

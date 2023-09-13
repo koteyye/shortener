@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"regexp"
 	"time"
@@ -15,11 +16,12 @@ var (
 )
 
 type ShortenerService struct {
-	storage storage.URLStorage
+	storage   storage.URLStorage
+	shortener *config.Shortener
 }
 
-func NewShortenerService(storage storage.URLStorage) *ShortenerService {
-	return &ShortenerService{storage: storage}
+func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener) *ShortenerService {
+	return &ShortenerService{storage: storage, shortener: shortener}
 }
 
 func (s ShortenerService) LongURL(shortURL string) (string, error) {
@@ -40,7 +42,7 @@ func (s ShortenerService) ShortURL(url string) (string, error) {
 
 	res := generateUnitKey()
 	s.storage.AddURL(res, url)
-	urlRes := "http://localhost:8080/" + res
+	urlRes := s.shortener.Listen + s.shortener.BaseURL + res
 	return urlRes, nil
 }
 

@@ -15,10 +15,10 @@ func NewHandlers(services *service.Service) *Handlers {
 	return &Handlers{services: services}
 }
 
-func (h Handlers) InitRoutes() *gin.Engine {
+func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r := gin.New()
-	r.POST("/", h.ShortenerURL)
-	r.GET("/:id", h.LongerURL)
+	r.POST(baseURL, h.ShortenerURL)
+	r.GET(baseURL+":id", h.LongerURL)
 	return r
 }
 
