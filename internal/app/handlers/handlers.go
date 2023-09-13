@@ -27,10 +27,12 @@ func (h Handlers) ShortenerURL(c *gin.Context) {
 	_, err := buf.ReadFrom(c.Request.Body)
 	if err != nil {
 		newResponse(c, http.StatusBadRequest, err)
+		return
 	}
 	result, err := h.services.ShortURL(buf.String())
 	if err != nil {
 		newResponse(c, http.StatusBadRequest, err)
+		return
 	}
 	c.String(http.StatusCreated, result)
 }
@@ -40,6 +42,7 @@ func (h Handlers) LongerURL(c *gin.Context) {
 	resURL, err := h.services.LongURL(id)
 	if err != nil {
 		newResponse(c, http.StatusBadRequest, err)
+		return
 	} else {
 		c.Redirect(http.StatusTemporaryRedirect, resURL)
 	}
