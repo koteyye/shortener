@@ -19,12 +19,11 @@ type URLMap struct {
 }
 
 func NewURLHandle() *URLHandler {
-	urlHandler := &URLHandler{
-		&URLMap{
+	return &URLHandler{
+		URLStorage: &URLMap{
 			storage: sync.Map{},
 		},
 	}
-	return urlHandler
 }
 
 func (u *URLMap) AddURL(k, s string) {
