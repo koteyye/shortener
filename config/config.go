@@ -2,47 +2,76 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"github.com/caarlos0/env/v6"
 )
 
 type Config struct {
-	Server    *Server    `yaml:"server"`
-	Shortener *Shortener `yaml:"shortener"`
+	Server    *Server
+	Shortener *Shortener
 }
 
 type Server struct {
-	BaseURL string `yaml:"base_url"`
-	Listen  string `yaml:"listen"`
+	BaseURL string `default:"/"`
+	Listen  string
 }
 
 type Shortener struct {
-	BaseURL string `yaml:"base_url"`
-	Listen  string `yaml:"listen"`
+	Listen string
+}
+
+type ENVValue struct {
+	Server    string `env:"SERVER_ADDRESS"`
+	Shortener string `env:"BASE_URL"`
 }
 
 func GetConfig() (*Config, error) {
 	var flagRunAddr string
 	var flagShortenerAddr string
+
 	flag.StringVar(&flagRunAddr, "a", "", "address and port to run server")
 	flag.StringVar(&flagShortenerAddr, "b", "", "address and port to shortener")
 	flag.Parse()
 
-	cfg := &Config{
+	var envVal ENVValue
+	if err := env.Parse(&envVal); err != nil {
+		return nil, err
+	}
+
+	var cfg *Config
+
+	//Конфиг сервера
+	var serverVal string
+	if envVal.Server != "" {
+		serverVal = envVal.Server
+	} else if flagRunAddr != "" {
+		serverVal = flagRunAddr
+	} else {
+		serverVal = "localhost:8080"
+	}
+
+	//Конфиг сокращателя URL
+	var shortenerVal string
+	if envVal.Shortener != "" {
+		shortenerVal = envVal.Shortener
+	} else if flagRunAddr != "" {
+		shortenerVal = flagShortenerAddr
+	} else {
+		shortenerVal = "http://localhost:8080"
+	}
+
+	cfg = &Config{
 		Server: &Server{
 			BaseURL: "/",
-			Listen:  "localhost:8080",
+			Listen:  serverVal,
 		},
 		Shortener: &Shortener{
-			BaseURL: "/",
-			Listen:  "http://localhost:8080",
+			Listen: shortenerVal,
 		},
 	}
 
-	if flagRunAddr != "" {
-		cfg.Server.Listen = flagRunAddr
-	}
-	if flagShortenerAddr != "" {
-		cfg.Shortener.Listen = flagShortenerAddr
-	}
+	fmt.Printf("\nServer address %v\n", cfg.Server.Listen)
+	fmt.Printf("Base url %v\n", cfg.Shortener.Listen)
 
 	return cfg, nil
 }

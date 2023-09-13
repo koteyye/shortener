@@ -9,8 +9,7 @@ import (
 
 // Тестовый конфиг для сокращения ссылок
 var shortenerCfg = &config.Shortener{
-	BaseURL: "/",
-	Listen:  "http://localhost:8080",
+	Listen: "http://localhost:8080/",
 }
 
 func TestShortenerService_LongURL(t *testing.T) {

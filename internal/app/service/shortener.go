@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
-	"regexp"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -32,17 +33,20 @@ func (s ShortenerService) LongURL(shortURL string) (string, error) {
 	return res, nil
 }
 
-func (s ShortenerService) ShortURL(url string) (string, error) {
-	if url == "" {
+func (s ShortenerService) ShortURL(urlVal string) (string, error) {
+	if urlVal == "" {
 		return "", ErrNullRequestBody
 	}
-	if partURL, _ := regexp.Match(`(http)`, []byte(url)); !partURL {
+	if partURL := strings.Contains(urlVal, "http"); !partURL {
 		return "", ErrInvalidRequestBodyURL
 	}
 
 	res := generateUnitKey()
-	s.storage.AddURL(res, url)
-	urlRes := s.shortener.Listen + s.shortener.BaseURL + res
+	s.storage.AddURL(res, urlVal)
+	urlRes, err := url.JoinPath(s.shortener.Listen, "/", res)
+	if err != nil {
+		return "", err
+	}
 	return urlRes, nil
 }
 
