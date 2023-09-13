@@ -1,8 +1,9 @@
 package handlers
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+)
 
-func newResponse(w http.ResponseWriter, statusCode int, message string) {
-	w.WriteHeader(statusCode)
-	w.Write([]byte(message))
+func newResponse(c *gin.Context, statusCode int, message error) {
+	c.String(statusCode, message.Error())
 }
