@@ -4,19 +4,22 @@ import (
 	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/internal/app/service"
+	"go.uber.org/zap"
 	"net/http"
 )
 
 type Handlers struct {
 	services *service.Service
+	logger   zap.SugaredLogger
 }
 
-func NewHandlers(services *service.Service) *Handlers {
-	return &Handlers{services: services}
+func NewHandlers(services *service.Service, logger zap.SugaredLogger) *Handlers {
+	return &Handlers{services: services, logger: logger}
 }
 
 func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r := gin.New()
+	r.Use(h.WithLogging())
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
 	return r
