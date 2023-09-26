@@ -81,6 +81,7 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 		newJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
+	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
 	c.Header("Content-type", "application/json; charset=utf-8")
 	c.String(http.StatusCreated, string(shortURL))
 }
