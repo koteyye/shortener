@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 )
 
@@ -22,6 +25,10 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r.Use(h.WithLogging())
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
+	api := r.Group("/api")
+	{
+		api.POST("/shorten", h.ShortenerURLJSON)
+	}
 	return r
 }
 
@@ -49,5 +56,31 @@ func (h Handlers) LongerURL(c *gin.Context) {
 	} else {
 		c.Redirect(http.StatusTemporaryRedirect, resURL)
 	}
+}
 
+func (h Handlers) ShortenerURLJSON(c *gin.Context) {
+	var input models.LongURL
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &input); err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	result, err := h.services.ShortURL(input.URL)
+	if err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	shortURL, err := json.Marshal(models.ShortURL{Result: result})
+	if err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	c.Header("Content-type", "application/json; charset=utf-8")
+	c.String(http.StatusCreated, string(shortURL))
 }
