@@ -22,7 +22,7 @@ func NewHandlers(services *service.Service, logger zap.SugaredLogger) *Handlers 
 
 func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r := gin.New()
-	r.Use(h.WithLogging(), h.Compressing())
+	r.Use(h.WithLogging())
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
 	api := r.Group("/api")
@@ -82,6 +82,6 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 		return
 	}
 	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
-	c.Header("Content-type", "application/json; charset=utf-8")
+	c.Header("Content-type", "application/json")
 	c.String(http.StatusCreated, string(shortURL))
 }
