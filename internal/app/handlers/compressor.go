@@ -27,6 +27,7 @@ func Compress() gin.HandlerFunc {
 		isAcceptGzip := slices.Contains(acceptGzip, "gzip")
 		if isAcceptGzip {
 			gw := gzip.NewWriter(c.Writer)
+			gw.Reset(c.Writer)
 			c.Writer = &gzipWriter{
 				ResponseWriter: c.Writer,
 				writer:         gw,
