@@ -24,7 +24,8 @@ func Compress() gin.HandlerFunc {
 		}
 
 		acceptGzip := c.Request.Header.Values("Accept-Encoding")
-		isAcceptGzip := slices.Contains(acceptGzip, "gzip")
+		acceptContent := []string{"application/json", "text/html"}
+		isAcceptGzip := slices.Contains(acceptGzip, "gzip") && slices.Contains(acceptContent, c.Request.Header.Get("Content-Type"))
 		if isAcceptGzip {
 			gw := gzip.NewWriter(c.Writer)
 			gw.Reset(c.Writer)

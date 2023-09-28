@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"time"
 )
 
@@ -18,11 +19,12 @@ type compressWriter struct {
 }
 
 type log struct {
-	URI        string `json:"uri"`
-	Method     string `json:"method"`
-	Duration   int64  `json:"duration"`
-	StatusCode int    `json:"statusCode"`
-	Size       int    `json:"size"`
+	URI        string      `json:"uri"`
+	Method     string      `json:"method"`
+	Duration   int64       `json:"duration"`
+	StatusCode int         `json:"statusCode"`
+	Size       int         `json:"size"`
+	Headers    http.Header `json:"headers"`
 }
 
 type responseData struct {
@@ -57,6 +59,7 @@ func (h Handlers) WithLogging() gin.HandlerFunc {
 			Duration:   duration,
 			StatusCode: c.Writer.Status(),
 			Size:       c.Writer.Size(),
+			Headers:    c.Request.Header,
 		})))
 	}
 	return logFn
