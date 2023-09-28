@@ -22,7 +22,7 @@ func NewHandlers(services *service.Service, logger zap.SugaredLogger) *Handlers 
 
 func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r := gin.New()
-	r.Use(h.WithLogging())
+	r.Use(h.WithLogging(), h.Compressing())
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
 	api := r.Group("/api")

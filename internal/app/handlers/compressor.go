@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"compress/gzip"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slices"
 	"net/http"
@@ -10,28 +11,32 @@ import (
 func Compress() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+		//
 		contentEncoding := c.Request.Header.Get("Content-Encoding")
 		if contentEncoding == "gzip" {
-			gr, err := gzip.NewReader(c.Request.Body)
+			gz, err := gzip.NewReader(c.Request.Body)
 			if err != nil {
 				newJSONResponse(c, http.StatusBadRequest, err)
-				return
 			}
-			defer gr.Close()
+			defer gz.Close()
 
-			c.Request.Body = gr
+			c.Request.Body = gz
 		}
 
-		acceptEncoding := c.Request.Header.Values("Accept-Encoding")
-		supportGzip := slices.Contains(acceptEncoding, "gzip")
-		if supportGzip {
+		acceptGzip := c.Request.Header.Values("Accept-Encoding")
+		isAcceptGzip := slices.Contains(acceptGzip, "gzip")
+		if isAcceptGzip {
 			gw := gzip.NewWriter(c.Writer)
 			c.Writer = &gzipWriter{
 				ResponseWriter: c.Writer,
 				writer:         gw,
 			}
+			c.Header("Content-Encoding", "gzip")
+			defer c.Header("Content-Length", fmt.Sprint(c.Writer.Size()))
 		}
+
 		c.Next()
+
 	}
 }
 
