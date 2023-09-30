@@ -34,7 +34,10 @@ func Compress() gin.HandlerFunc {
 				writer:         gw,
 			}
 			c.Header("Content-Encoding", "gzip")
-			defer c.Header("Content-Length", fmt.Sprint(c.Writer.Size()))
+			defer func() {
+				gw.Close()
+				c.Header("Content-Length", fmt.Sprint(c.Writer.Size()))
+			}()
 		}
 
 		c.Next()
