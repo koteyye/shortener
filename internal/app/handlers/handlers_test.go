@@ -192,7 +192,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 				statusCodePOST: 201,
 				statusCodeGET:  307,
 				locationHeader: "https://practicum.yandex.ru/",
-				contentType:    "application/json; charset=utf-8",
+				contentType:    "application/json",
 			},
 		},
 		{
@@ -202,7 +202,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 			want: want{
 				statusCodePOST: 400,
 				wantErr:        service.ErrNullRequestBody,
-				contentType:    "application/json; charset=utf-8",
+				contentType:    "application/json",
 			},
 		},
 		{
@@ -212,7 +212,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 			want: want{
 				statusCodePOST: 400,
 				wantErr:        service.ErrInvalidRequestBodyURL,
-				contentType:    "application/json; charset=utf-8",
+				contentType:    "application/json",
 			},
 		},
 	}
