@@ -10,7 +10,7 @@ import (
 var ErrNotFound = errors.New("не найдено такого значения")
 
 type URLStorage interface {
-	AddURL(string, string)
+	AddURL(string, string) error
 	GetURL(string) (string, error)
 }
 
@@ -46,24 +46,25 @@ func NewURLHandle(filePath string) *URLHandler {
 	}
 }
 
-func (u *URLMap) AddURL(k, s string) {
+func (u *URLMap) AddURL(k, s string) error {
 	b := u.fileStorage.FileWriter.filePath
 	if b != "" {
 		var id int
 		err := u.fileStorage.FileWriter.Mkdir()
 		if err != nil {
-			log.Fatal(err)
-			return
+			return err
 		}
 
 		reader, err := u.fileStorage.FileReader.NewReader()
 		if err != nil {
-			log.Fatal(err)
-			return
+			return err
 		}
 		defer reader.Close()
 
 		readFile, err := reader.ReadShortURL()
+		if err != nil {
+			return err
+		}
 		if readFile == nil {
 			id = 1
 		} else {
@@ -73,7 +74,7 @@ func (u *URLMap) AddURL(k, s string) {
 		writer, err := u.fileStorage.FileWriter.NewWriter()
 		if err != nil {
 			log.Fatal(err)
-			return
+			return err
 		}
 		defer writer.Close()
 
@@ -83,11 +84,12 @@ func (u *URLMap) AddURL(k, s string) {
 			OriginalURL: s,
 		})
 		if err != nil {
-			log.Fatal(err)
-			return
+			return err
 		}
+		return nil
 	} else {
 		u.storage.Store(k, s)
+		return nil
 	}
 }
 
