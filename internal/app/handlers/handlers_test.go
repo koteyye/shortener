@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -72,7 +73,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -108,6 +109,10 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 			}
 		})
+	}
+	err := os.RemoveAll("tmp/")
+	if err != nil {
+		return
 	}
 }
 
@@ -145,7 +150,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 			},
 		},
 	}
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 
@@ -166,6 +171,10 @@ func TestHandlers_LongerURL(t *testing.T) {
 		if test.wantErr != nil {
 			assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 		}
+	}
+	err := os.RemoveAll("tmp/")
+	if err != nil {
+		return
 	}
 }
 
@@ -217,7 +226,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -258,5 +267,9 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 			}
 		})
+	}
+	err := os.RemoveAll("tmp/")
+	if err != nil {
+		return
 	}
 }
