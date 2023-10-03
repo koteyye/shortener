@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"github.com/koteyye/shortener/internal/app/models"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 type FileStorage struct {
@@ -26,7 +24,7 @@ type FileReader struct {
 	scanner  *bufio.Scanner
 }
 
-func (w FileWriter) NewWriter() (*FileWriter, error) {
+func (w *FileWriter) NewWriter() (*FileWriter, error) {
 	file, err := os.OpenFile(w.filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
@@ -49,21 +47,21 @@ func (w *FileWriter) Close() error {
 	return w.file.Close()
 }
 
-func (w *FileWriter) Mkdir() error {
-	path := strings.TrimLeft(filepath.Dir(w.filePath), "/")
-	_, err := os.Stat(path)
-	if err == nil {
-		return nil
-	}
-	if os.IsNotExist(err) {
-		err := os.MkdirAll(path, os.ModePerm)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	return err
-}
+//func (w *FileWriter) Mkdir() error {
+//	path := filepath.Dir(w.filePath)
+//	_, err := os.Stat(path)
+//	if err == nil {
+//		return nil
+//	}
+//	if os.IsNotExist(err) {
+//		err := os.MkdirAll(path, os.ModePerm)
+//		if err != nil {
+//			return err
+//		}
+//		return nil
+//	}
+//	return err
+//}
 
 func (r *FileReader) NewReader() (*FileReader, error) {
 	file, err := os.OpenFile(r.filePath, os.O_RDONLY|os.O_CREATE, 0666)

@@ -9,7 +9,7 @@ type ShortURL struct {
 }
 
 type FileString struct {
-	Id          int    `json:"id"`
+	ID          int    `json:"id"`
 	ShortURL    string `json:"shortURL"`
 	OriginalURL string `json:"originalURL"`
 }

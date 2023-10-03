@@ -7,7 +7,6 @@ import (
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/koteyye/shortener/server"
 	"go.uber.org/zap"
-	"strings"
 )
 
 func main() {
@@ -29,7 +28,7 @@ func main() {
 	}
 
 	//init internal
-	storages := storage.NewURLHandle(strings.TrimLeft(cfg.FileStoragePath, "/"))
+	storages := storage.NewURLHandle(cfg.FileStoragePath)
 	services := service.NewService(storages, cfg.Shortener)
 	handler := handlers.NewHandlers(services, sugar)
 

@@ -79,7 +79,6 @@ func GetConfig() (*Config, error) {
 }
 
 func calcValue(envVal string, fl string, defVal string) string {
-	fmt.Printf("envVal: %v\n flag: %v\n default: %v\n", envVal, fl, defVal)
 
 	val := defVal
 

@@ -30,6 +30,9 @@ var cfg = config.Config{
 }
 
 func TestHandlers_ShortenerURL(t *testing.T) {
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
+
 	type want struct {
 		statusCodePOST int
 		statusCodeGET  int
@@ -73,7 +76,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
+	storages := storage.NewURLHandle(file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -110,13 +113,11 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			}
 		})
 	}
-	err := os.RemoveAll("tmp/")
-	if err != nil {
-		return
-	}
 }
 
 func TestHandlers_LongerURL(t *testing.T) {
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
 	type want struct {
 		statusCode     int
 		locationHeader string
@@ -150,7 +151,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 			},
 		},
 	}
-	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
+	storages := storage.NewURLHandle(file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 
@@ -172,13 +173,11 @@ func TestHandlers_LongerURL(t *testing.T) {
 			assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 		}
 	}
-	err := os.RemoveAll("tmp/")
-	if err != nil {
-		return
-	}
 }
 
 func TestHandlers_ShortenerURLJSON(t *testing.T) {
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
 	type want struct {
 		statusCodePOST int
 		statusCodeGET  int
@@ -226,7 +225,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
+	storages := storage.NewURLHandle(file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -267,9 +266,5 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 			}
 		})
-	}
-	err := os.RemoveAll("tmp/")
-	if err != nil {
-		return
 	}
 }

@@ -50,10 +50,10 @@ func (u *URLMap) AddURL(k, s string) error {
 	b := u.fileStorage.FileWriter.filePath
 	if b != "" {
 		var id int
-		err := u.fileStorage.FileWriter.Mkdir()
-		if err != nil {
-			return err
-		}
+		//err := u.fileStorage.FileWriter.Mkdir()
+		//if err != nil {
+		//	return err
+		//}
 
 		reader, err := u.fileStorage.FileReader.NewReader()
 		if err != nil {
@@ -68,7 +68,7 @@ func (u *URLMap) AddURL(k, s string) error {
 		if readFile == nil {
 			id = 1
 		} else {
-			id = readFile.Id + 1
+			id = readFile.ID + 1
 		}
 
 		writer, err := u.fileStorage.FileWriter.NewWriter()
@@ -79,7 +79,7 @@ func (u *URLMap) AddURL(k, s string) error {
 		defer writer.Close()
 
 		err = writer.WriteShortURL(models.FileString{
-			Id:          id,
+			ID:          id,
 			ShortURL:    k,
 			OriginalURL: s,
 		})
@@ -96,10 +96,10 @@ func (u *URLMap) AddURL(k, s string) error {
 func (u *URLMap) GetURL(k string) (string, error) {
 	b := u.fileStorage.FileReader.filePath
 	if b != "" {
-		err := u.fileStorage.FileWriter.Mkdir()
-		if err != nil {
-			return "", err
-		}
+		//err := u.fileStorage.FileWriter.Mkdir()
+		//if err != nil {
+		//	return "", err
+		//}
 
 		reader, err := u.fileStorage.FileReader.NewReader()
 		if err != nil {
