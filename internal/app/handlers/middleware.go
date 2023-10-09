@@ -6,12 +6,17 @@ import (
 	"time"
 )
 
+type LoggingResponseWriter struct {
+	gin.ResponseWriter
+	responseData *responseData
+}
+
 type log struct {
-	URI        string        `json:"uri"`
-	Method     string        `json:"method"`
-	StatusCode int           `json:"statusCode"`
-	Duration   time.Duration `json:"duration"`
-	Size       int           `json:"size"`
+	URI        string `json:"uri"`
+	Method     string `json:"method"`
+	Duration   int64  `json:"duration"`
+	StatusCode int    `json:"statusCode"`
+	Size       int    `json:"size"`
 }
 
 type responseData struct {
@@ -19,9 +24,8 @@ type responseData struct {
 	size   int
 }
 
-type loggingResponseWriter struct {
-	gin.ResponseWriter
-	responseData *responseData
+func (h Handlers) Compressing() gin.HandlerFunc {
+	return Compress()
 }
 
 func (h Handlers) WithLogging() gin.HandlerFunc {
@@ -33,13 +37,13 @@ func (h Handlers) WithLogging() gin.HandlerFunc {
 			size:   0,
 		}
 
-		lw := &loggingResponseWriter{
+		lw := &LoggingResponseWriter{
 			ResponseWriter: c.Writer,
 			responseData:   responseData,
 		}
 		c.Writer = lw
 		c.Next()
-		duration := time.Since(start)
+		duration := time.Since(start).Nanoseconds()
 
 		h.logger.Infow("HTTP Request", "event", string(marshalJSON(&log{
 			URI:        c.Request.RequestURI,
