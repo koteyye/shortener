@@ -6,6 +6,7 @@ import (
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -71,7 +72,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 
 	storages := storage.NewURLHandle()
 	services := service.NewService(storages, cfg.Shortener)
-	h := NewHandlers(services)
+	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -144,7 +145,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 	}
 	storages := storage.NewURLHandle()
 	services := service.NewService(storages, cfg.Shortener)
-	h := NewHandlers(services)
+	h := NewHandlers(services, zap.SugaredLogger{})
 
 	//Предварительно добавляется валидное значение в Storage
 	storages.AddURL("MTY5NDAzNTIwNjI4NjQyNzIwOQ==", "https://practicum.yandex.ru/")
