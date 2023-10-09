@@ -43,7 +43,7 @@ func (s ShortenerService) ShortURL(urlVal string) (string, error) {
 
 	res := generateUnitKey()
 	if err := s.storage.AddURL(res, urlVal); err != nil {
-		return "", err
+		return "", fmt.Errorf("add url: %w", err)
 	}
 	urlRes, err := url.JoinPath(s.shortener.Listen, "/", res)
 	if err != nil {

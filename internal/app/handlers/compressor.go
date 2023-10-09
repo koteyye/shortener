@@ -17,6 +17,7 @@ func Compress() gin.HandlerFunc {
 			gz, err := gzip.NewReader(c.Request.Body)
 			if err != nil {
 				newJSONResponse(c, http.StatusBadRequest, err)
+				return
 			}
 			defer gz.Close()
 

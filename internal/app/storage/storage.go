@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"github.com/koteyye/shortener/internal/app/models"
 	"log"
 	"sync"
@@ -57,13 +58,13 @@ func (u *URLMap) AddURL(k, s string) error {
 
 		reader, err := u.fileStorage.FileReader.NewReader()
 		if err != nil {
-			return err
+			return fmt.Errorf("err reader: %w", err)
 		}
 		defer reader.Close()
 
 		readFile, err := reader.ReadShortURL()
 		if err != nil {
-			return err
+			return fmt.Errorf("err read file: %w", err)
 		}
 		if readFile == nil {
 			id = 1
@@ -84,7 +85,7 @@ func (u *URLMap) AddURL(k, s string) error {
 			OriginalURL: s,
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("err write shortURL: %w", err)
 		}
 		return nil
 	} else {
@@ -103,13 +104,13 @@ func (u *URLMap) GetURL(k string) (string, error) {
 
 		reader, err := u.fileStorage.FileReader.NewReader()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("err reader: %w", err)
 		}
 		defer reader.Close()
 
 		readFile, err := reader.FindOriginalURL(k)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("err read file: %w", err)
 		}
 		return readFile.OriginalURL, nil
 

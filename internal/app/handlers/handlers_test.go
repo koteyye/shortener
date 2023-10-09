@@ -9,6 +9,7 @@ import (
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -177,7 +178,8 @@ func TestHandlers_LongerURL(t *testing.T) {
 
 func TestHandlers_ShortenerURLJSON(t *testing.T) {
 	testDir := t.TempDir()
-	file, _ := os.CreateTemp(testDir, "db")
+	file, err := os.CreateTemp(testDir, "db")
+	require.NoError(t, err)
 	type want struct {
 		statusCodePOST int
 		statusCodeGET  int
