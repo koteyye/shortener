@@ -2,11 +2,13 @@ package storage
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
 func TestStorage_AddURL(t *testing.T) {
-
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
 	tests := []struct {
 		name string
 		key  string
@@ -21,7 +23,7 @@ func TestStorage_AddURL(t *testing.T) {
 		},
 	}
 
-	s := NewURLHandle()
+	s := NewURLHandle(file.Name())
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			s.AddURL(test.key, test.val)
@@ -35,7 +37,9 @@ func TestStorage_AddURL(t *testing.T) {
 }
 
 func TestStorage_GetURL(t *testing.T) {
-	s := NewURLHandle()
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
+	s := NewURLHandle(file.Name())
 	//Кладем значение для теста
 	s.AddURL("sdvgdsgv", "https://practicum.yandex.ru/")
 

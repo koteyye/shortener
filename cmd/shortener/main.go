@@ -23,8 +23,12 @@ func main() {
 		sugar.Fatalw(err.Error(), "event", "get config")
 	}
 
+	if err != nil {
+		return
+	}
+
 	//init internal
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(cfg.FileStoragePath)
 	services := service.NewService(storages, cfg.Shortener)
 	handler := handlers.NewHandlers(services, sugar)
 

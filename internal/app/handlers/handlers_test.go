@@ -9,10 +9,12 @@ import (
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -29,6 +31,9 @@ var cfg = config.Config{
 }
 
 func TestHandlers_ShortenerURL(t *testing.T) {
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
+
 	type want struct {
 		statusCodePOST int
 		statusCodeGET  int
@@ -72,7 +77,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -112,6 +117,8 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 }
 
 func TestHandlers_LongerURL(t *testing.T) {
+	testDir := t.TempDir()
+	file, _ := os.CreateTemp(testDir, "db")
 	type want struct {
 		statusCode     int
 		locationHeader string
@@ -145,7 +152,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 			},
 		},
 	}
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 
@@ -170,6 +177,9 @@ func TestHandlers_LongerURL(t *testing.T) {
 }
 
 func TestHandlers_ShortenerURLJSON(t *testing.T) {
+	testDir := t.TempDir()
+	file, err := os.CreateTemp(testDir, "db")
+	require.NoError(t, err)
 	type want struct {
 		statusCodePOST int
 		statusCodeGET  int
@@ -217,7 +227,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle()
+	storages := storage.NewURLHandle(file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
