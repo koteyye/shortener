@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +13,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -88,7 +90,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 			body, _ := io.ReadAll(result.Body)
 
 			if result.StatusCode == 201 {
-				regCheck, _ := regexp.Match(hostName, body)
+				regCheck := strings.Contains(string(body), hostName)
 				assert.Equal(t, true, regCheck)
 				shortURL := strings.TrimPrefix(string(body), hostName)
 				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
@@ -164,5 +166,97 @@ func TestHandlers_LongerURL(t *testing.T) {
 		if test.wantErr != nil {
 			assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
 		}
+	}
+}
+
+func TestHandlers_ShortenerURLJSON(t *testing.T) {
+	type want struct {
+		statusCodePOST int
+		statusCodeGET  int
+		locationHeader string
+		contentType    string
+		wantErr        error
+	}
+	tests := []struct {
+		name        string
+		methodType  string
+		request     string
+		requestBody models.LongURL
+		want        want
+	}{
+		{
+			name:        "success",
+			request:     "/api/shorten",
+			requestBody: models.LongURL{URL: "https://practicum.yandex.ru/"},
+			want: want{
+				statusCodePOST: 201,
+				statusCodeGET:  307,
+				locationHeader: "https://practicum.yandex.ru/",
+				contentType:    "application/json; charset=utf-8",
+			},
+		},
+		{
+			name:        "null body",
+			request:     "/",
+			requestBody: models.LongURL{URL: ""},
+			want: want{
+				statusCodePOST: 400,
+				wantErr:        service.ErrNullRequestBody,
+				contentType:    "application/json; charset=utf-8",
+			},
+		},
+		{
+			name:        "invalid URL",
+			request:     "/",
+			requestBody: models.LongURL{URL: "practicum.yandex.ru/"},
+			want: want{
+				statusCodePOST: 400,
+				wantErr:        service.ErrInvalidRequestBodyURL,
+				contentType:    "application/json; charset=utf-8",
+			},
+		},
+	}
+
+	storages := storage.NewURLHandle()
+	services := service.NewService(storages, cfg.Shortener)
+	h := NewHandlers(services, zap.SugaredLogger{})
+	hostName := cfg.Shortener.Listen + "/"
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			//Тест POST
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			req, _ := json.Marshal(test.requestBody)
+			reader := bytes.NewReader(req)
+			c.Request = httptest.NewRequest(http.MethodPost, test.request, reader)
+			h.ShortenerURLJSON(c)
+
+			result := w.Result()
+			defer result.Body.Close()
+			//Преобразуем тело для проверки
+			body, _ := io.ReadAll(result.Body)
+
+			if result.StatusCode == 201 {
+				var bodyShortURL models.ShortURL
+				_ = json.Unmarshal(body, &bodyShortURL)
+				regCheck := strings.Contains(bodyShortURL.Result, hostName)
+				assert.Equal(t, true, regCheck)
+				shortURL := strings.TrimPrefix(bodyShortURL.Result, hostName)
+				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
+				assert.Equal(t, test.want.contentType, result.Header.Get("Content-Type"))
+				wGET := httptest.NewRecorder()
+				c2, _ := gin.CreateTestContext(wGET)
+				c2.Request = httptest.NewRequest(http.MethodGet, test.request, nil)
+				c2.AddParam("id", shortURL)
+				h.LongerURL(c2)
+				resultGET := wGET.Result()
+				defer resultGET.Body.Close()
+				assert.Equal(t, test.want.statusCodeGET, resultGET.StatusCode)
+				assert.Equal(t, test.want.locationHeader, resultGET.Header.Get("Location"))
+			} else {
+				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
+				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
+			}
+		})
 	}
 }
