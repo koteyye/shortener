@@ -32,7 +32,7 @@ type ENVValue struct {
 	Server          string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
 	Shortener       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"/tmp/short-url-db.json"`
-	DataBaseDns     string `env:"DATABASE_DNS"`
+	DataBaseDNS     string `env:"DATABASE_DNS"`
 }
 
 func GetConfig(logger zap.SugaredLogger) (*Config, error) {
@@ -64,7 +64,7 @@ func GetConfig(logger zap.SugaredLogger) (*Config, error) {
 	filePathVal := calcValue(envVal.FileStoragePath, flagFileStoragePath, defaultFileStoragePath)
 
 	//Конфиг DB
-	dbVal := calcValue(envVal.DataBaseDns, flagDataBaseDNS, "")
+	dbVal := calcValue(envVal.DataBaseDNS, flagDataBaseDNS, "")
 
 	cfg = &Config{
 		Server: &Server{

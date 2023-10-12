@@ -40,7 +40,6 @@ func (h Handlers) Ping(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusOK)
-	return
 }
 
 func (h Handlers) ShortenerURL(c *gin.Context) {
