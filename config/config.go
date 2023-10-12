@@ -1,12 +1,14 @@
 package config
 
 import (
+	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 )
 
 const (
-	defaultServer          = "localhost:8080"
-	defaultShortenerHost   = "http://localhost:8080"
+	defaultServer          = "localhost:8081"
+	defaultShortenerHost   = "http://localhost:8081"
 	defaultFileStoragePath = "/tmp/short-url-db.json"
 )
 
@@ -33,34 +35,51 @@ type ENVValue struct {
 	DataBaseDNS     string `env:"DATABASE_DNS"`
 }
 
+type cliFlag struct {
+	flagAddress  string
+	flagShorten  string
+	flagFilePath string
+	flagDNS      string
+}
+
 func GetConfig() (*Config, error) {
+	cliFlags := &cliFlag{}
+	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
+	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
+	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
+	flag.StringVar(&cliFlags.flagDNS, "d", "", "DNS")
+	flag.Parse()
+	fmt.Println(cliFlags)
 
 	var envVal ENVValue
 	if err := env.Parse(&envVal); err != nil {
 		return nil, err
 	}
 
-	cfg := mapEnvFlagToConfig(&envVal)
+	cfg := mapEnvFlagToConfig(&envVal, cliFlags)
 
 	return cfg, nil
 }
 
-func mapEnvFlagToConfig(envVal *ENVValue) *Config {
+func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
 	return &Config{
 		Server: &Server{
-			Listen:  calcVal(envVal.Server, defaultServer),
+			Listen:  calcVal(envVal.Server, cliFlags.flagAddress, defaultServer),
 			BaseURL: "/",
 		},
-		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, defaultShortenerHost)},
-		FileStoragePath: calcVal(envVal.FileStoragePath, defaultFileStoragePath),
-		DataBaseDNS:     calcVal(envVal.DataBaseDNS, ""),
+		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, cliFlags.flagShorten, defaultShortenerHost)},
+		FileStoragePath: calcVal(envVal.FileStoragePath, cliFlags.flagFilePath, defaultFileStoragePath),
+		DataBaseDNS:     calcVal(envVal.DataBaseDNS, cliFlags.flagDNS, ""),
 	}
 
 }
 
-func calcVal(env string, def string) string {
+func calcVal(env string, fl string, def string) string {
 	if env != "" {
 		return env
+	}
+	if fl != "" {
+		return fl
 	}
 	return def
 }
