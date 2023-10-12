@@ -40,6 +40,7 @@ func GetConfig(logger zap.SugaredLogger) (*Config, error) {
 	var flagShortenerAddr string
 	var flagFileStoragePath string
 	var flagDataBaseDNS string
+	flag.Bool("d", false, "db")
 
 	flag.StringVar(&flagRunAddr, "a", defaultServer, "address and port to run server")
 	flag.StringVar(&flagShortenerAddr, "b", defaultShortenerHost, "address and port to shortener")
