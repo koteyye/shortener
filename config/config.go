@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"github.com/caarlos0/env/v6"
 )
 
@@ -34,50 +33,34 @@ type ENVValue struct {
 	DataBaseDNS     string `env:"DATABASE_DNS"`
 }
 
-type cliFlag struct {
-	flagAddress  string
-	flagShorten  string
-	flagFilePath string
-	flagDNS      string
-}
-
 func GetConfig() (*Config, error) {
-	cliFlags := &cliFlag{}
-
-	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
-	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
-	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
-	flag.Parse()
 
 	var envVal ENVValue
 	if err := env.Parse(&envVal); err != nil {
 		return nil, err
 	}
 
-	cfg := mapEnvFlagToConfig(&envVal, cliFlags)
+	cfg := mapEnvFlagToConfig(&envVal)
 
 	return cfg, nil
 }
 
-func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
+func mapEnvFlagToConfig(envVal *ENVValue) *Config {
 	return &Config{
 		Server: &Server{
-			Listen:  calcVal(envVal.Server, cliFlags.flagAddress, defaultServer),
+			Listen:  calcVal(envVal.Server, defaultServer),
 			BaseURL: "/",
 		},
-		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, cliFlags.flagShorten, defaultShortenerHost)},
-		FileStoragePath: calcVal(envVal.FileStoragePath, cliFlags.flagFilePath, defaultFileStoragePath),
-		DataBaseDNS:     calcVal(envVal.DataBaseDNS, cliFlags.flagDNS, ""),
+		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, defaultShortenerHost)},
+		FileStoragePath: calcVal(envVal.FileStoragePath, defaultFileStoragePath),
+		DataBaseDNS:     calcVal(envVal.DataBaseDNS, ""),
 	}
 
 }
 
-func calcVal(env string, fl string, def string) string {
+func calcVal(env string, def string) string {
 	if env != "" {
 		return env
-	}
-	if fl != "" {
-		return fl
 	}
 	return def
 }
