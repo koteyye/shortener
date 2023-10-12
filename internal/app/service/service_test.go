@@ -4,8 +4,8 @@ import (
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -15,6 +15,9 @@ var shortenerCfg = &config.Shortener{
 }
 
 func TestShortenerService_LongURL(t *testing.T) {
+	testDir := t.TempDir()
+	file, err := os.CreateTemp(testDir, "db")
+	require.NoError(t, err)
 	tests := []struct {
 		name  string
 		value string
@@ -32,7 +35,7 @@ func TestShortenerService_LongURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
+	storages := storage.NewURLHandle(nil, file.Name())
 	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -46,13 +49,13 @@ func TestShortenerService_LongURL(t *testing.T) {
 			}
 		})
 	}
-	err := os.RemoveAll("tmp/")
-	if err != nil {
-		return
-	}
+	assert.NoError(t, err)
 }
 
 func TestShortenerService_ShortURL(t *testing.T) {
+	testDir := t.TempDir()
+	file, err := os.CreateTemp(testDir, "db")
+	require.NoError(t, err)
 	tests := []struct {
 		name  string
 		value string
@@ -74,7 +77,7 @@ func TestShortenerService_ShortURL(t *testing.T) {
 			want:  "",
 		},
 	}
-	storages := storage.NewURLHandle(strings.TrimLeft("/tmp/short-url-db.json", "/"))
+	storages := storage.NewURLHandle(nil, file.Name())
 	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -86,8 +89,6 @@ func TestShortenerService_ShortURL(t *testing.T) {
 			}
 		})
 	}
-	err := os.RemoveAll("tmp/")
-	if err != nil {
-		return
-	}
+	err = os.RemoveAll("tmp/")
+	assert.NoError(t, err)
 }

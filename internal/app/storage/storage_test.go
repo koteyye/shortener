@@ -2,13 +2,10 @@ package storage
 
 import (
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
 func TestStorage_AddURL(t *testing.T) {
-	testDir := t.TempDir()
-	file, _ := os.CreateTemp(testDir, "db")
 	tests := []struct {
 		name string
 		key  string
@@ -23,7 +20,7 @@ func TestStorage_AddURL(t *testing.T) {
 		},
 	}
 
-	s := NewURLHandle(file.Name())
+	s := NewURLHandle(nil, "")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			s.AddURL(test.key, test.val)
@@ -37,11 +34,10 @@ func TestStorage_AddURL(t *testing.T) {
 }
 
 func TestStorage_GetURL(t *testing.T) {
-	testDir := t.TempDir()
-	file, _ := os.CreateTemp(testDir, "db")
-	s := NewURLHandle(file.Name())
+	s := NewURLHandle(nil, "")
 	//Кладем значение для теста
-	s.AddURL("sdvgdsgv", "https://practicum.yandex.ru/")
+	err := s.AddURL("sdvgdsgv", "https://practicum.yandex.ru/")
+	assert.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -64,12 +60,10 @@ func TestStorage_GetURL(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s.GetURL(test.key)
-
-			result, err := s.GetURL(test.key)
+			url, err := s.GetURL(test.key)
 
 			if !test.wantErr {
-				assert.Equal(t, test.want, result)
+				assert.Equal(t, test.want, url)
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)

@@ -8,6 +8,7 @@ import (
 type Shortener interface {
 	ShortURL(url string) (string, error)
 	LongURL(shortURL string) (string, error)
+	Ping() error
 }
 
 type Service struct {

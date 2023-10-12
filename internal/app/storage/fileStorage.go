@@ -3,13 +3,78 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/koteyye/shortener/internal/app/models"
+	"log"
 	"os"
 )
 
 type FileStorage struct {
-	FileWriter
-	FileReader
+	fileWriter *FileWriter
+	fileReader *FileReader
+}
+
+func (f *FileStorage) Ping() error {
+	return errors.New("в качестве бд используется файл")
+}
+
+func NewFileStorage(filepath string) *FileStorage {
+	return &FileStorage{
+		fileWriter: &FileWriter{filePath: filepath},
+		fileReader: &FileReader{filePath: filepath},
+	}
+}
+
+func (f *FileStorage) AddURL(s string, k string) error {
+	var id int
+
+	reader, err := f.fileReader.NewReader()
+	if err != nil {
+		return fmt.Errorf("err reader: %w", err)
+	}
+	defer reader.Close()
+
+	readFile, err := reader.ReadShortURL()
+	if err != nil {
+		return fmt.Errorf("err read file: %w", err)
+	}
+	if readFile == nil {
+		id = 1
+	} else {
+		id = readFile.ID + 1
+	}
+
+	writer, err := f.fileWriter.NewWriter()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	defer writer.Close()
+
+	err = writer.WriteShortURL(models.FileString{
+		ID:          id,
+		ShortURL:    s,
+		OriginalURL: k,
+	})
+	if err != nil {
+		return fmt.Errorf("err write shortURL: %w", err)
+	}
+	return nil
+}
+
+func (f *FileStorage) GetURL(k string) (string, error) {
+	reader, err := f.fileReader.NewReader()
+	if err != nil {
+		return "", fmt.Errorf("err reader: %w", err)
+	}
+	defer reader.Close()
+
+	readFile, err := reader.FindOriginalURL(k)
+	if err != nil {
+		return "", fmt.Errorf("err read file: %w", err)
+	}
+	return readFile.OriginalURL, nil
 }
 
 type FileWriter struct {
@@ -21,7 +86,6 @@ type FileWriter struct {
 type FileReader struct {
 	filePath string
 	file     *os.File
-	scanner  *bufio.Scanner
 }
 
 func (w *FileWriter) NewWriter() (*FileWriter, error) {
@@ -47,35 +111,21 @@ func (w *FileWriter) Close() error {
 	return w.file.Close()
 }
 
-//func (w *FileWriter) Mkdir() error {
-//	path := filepath.Dir(w.filePath)
-//	_, err := os.Stat(path)
-//	if err == nil {
-//		return nil
-//	}
-//	if os.IsNotExist(err) {
-//		err := os.MkdirAll(path, os.ModePerm)
-//		if err != nil {
-//			return err
-//		}
-//		return nil
-//	}
-//	return err
-//}
-
 func (r *FileReader) NewReader() (*FileReader, error) {
 	file, err := os.OpenFile(r.filePath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
-	return &FileReader{file: file, scanner: bufio.NewScanner(file)}, nil
+	return &FileReader{file: file}, nil
 }
 
 func (r *FileReader) ReadShortURL() (*models.FileString, error) {
 	var fileString models.FileString
 
-	for r.scanner.Scan() {
-		err := json.Unmarshal(r.scanner.Bytes(), &fileString)
+	scanner := bufio.NewScanner(r.file)
+
+	for scanner.Scan() {
+		err := json.Unmarshal(scanner.Bytes(), &fileString)
 		if err != nil {
 			return nil, err
 		}
@@ -91,8 +141,10 @@ func (r *FileReader) Close() error {
 func (r *FileReader) FindOriginalURL(shortURL string) (*models.FileString, error) {
 	var fileString models.FileString
 
-	for r.scanner.Scan() {
-		err := json.Unmarshal(r.scanner.Bytes(), &fileString)
+	scanner := bufio.NewScanner(r.file)
+
+	for scanner.Scan() {
+		err := json.Unmarshal(scanner.Bytes(), &fileString)
 		if err != nil {
 			return nil, err
 		}

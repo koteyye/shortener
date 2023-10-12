@@ -25,11 +25,22 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r.Use(h.WithLogging(), Compress())
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
+	r.GET(baseURL+"/ping", h.Ping)
 	api := r.Group("/api")
 	{
 		api.POST("/shorten", h.ShortenerURLJSON)
 	}
 	return r
+}
+
+func (h Handlers) Ping(c *gin.Context) {
+	err := h.services.Ping()
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	c.Status(http.StatusOK)
+	return
 }
 
 func (h Handlers) ShortenerURL(c *gin.Context) {
