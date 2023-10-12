@@ -56,7 +56,6 @@ func main() {
 	restServer := new(server.Server)
 	if err := restServer.Run(cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
 		sugar.Fatalw(err.Error(), "event", "start server")
-		panic(err)
 	}
 
 }

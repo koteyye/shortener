@@ -28,9 +28,9 @@ type Shortener struct {
 }
 
 type ENVValue struct {
-	Server          string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
-	Shortener       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"/tmp/short-url-db.json"`
+	Server          string `env:"SERVER_ADDRESS"`
+	Shortener       string `env:"BASE_URL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	DataBaseDNS     string `env:"DATABASE_DNS"`
 }
 
@@ -47,7 +47,6 @@ func GetConfig() (*Config, error) {
 	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
 	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
 	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
-	flag.StringVar(&cliFlags.flagDNS, "d", "", "DNS")
 	flag.Parse()
 
 	var envVal ENVValue
@@ -74,7 +73,7 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
 }
 
 func calcVal(env string, fl string, def string) string {
-	if env != def {
+	if env != "" {
 		return env
 	}
 	if fl != "" {
