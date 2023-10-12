@@ -26,11 +26,15 @@ func main() {
 
 	sugar := *logger.Sugar()
 
-	cfg, err := config.GetConfig(sugar)
+	cfg, err := config.GetConfig()
 	if err != nil {
 		sugar.Fatalw(err.Error(), "event", "get config")
 		return
 	}
+	sugar.Info("Server address: ", cfg.Server.Listen)
+	sugar.Info("BaseURL: ", cfg.Shortener.Listen)
+	sugar.Info("File storage path: ", cfg.FileStoragePath)
+	sugar.Info("DataBase DN: ", cfg.DataBaseDNS)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
@@ -52,6 +56,7 @@ func main() {
 	restServer := new(server.Server)
 	if err := restServer.Run(cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
 		sugar.Fatalw(err.Error(), "event", "start server")
+		panic(err)
 	}
 
 }

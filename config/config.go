@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
-	"go.uber.org/zap"
 )
 
 const (
@@ -35,17 +34,20 @@ type ENVValue struct {
 	DataBaseDNS     string `env:"DATABASE_DNS"`
 }
 
-func GetConfig(logger zap.SugaredLogger) (*Config, error) {
-	var flagRunAddr string
-	var flagShortenerAddr string
-	var flagFileStoragePath string
-	var flagDataBaseDNS string
-	flag.Bool("d", false, "db")
+type cliFlag struct {
+	flagAddress  string
+	flagShorten  string
+	flagFilePath string
+	flagDNS      string
+}
 
-	flag.StringVar(&flagRunAddr, "a", defaultServer, "address and port to run server")
-	flag.StringVar(&flagShortenerAddr, "b", defaultShortenerHost, "address and port to shortener")
-	flag.StringVar(&flagFileStoragePath, "f", defaultFileStoragePath, "file path for DB")
-	flag.StringVar(&flagDataBaseDNS, "d", "", "db dns")
+func GetConfig() (*Config, error) {
+	cliFlags := &cliFlag{}
+
+	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
+	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
+	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
+	flag.StringVar(&cliFlags.flagDNS, "d", "", "DNS")
 	flag.Parse()
 
 	var envVal ENVValue
@@ -53,46 +55,30 @@ func GetConfig(logger zap.SugaredLogger) (*Config, error) {
 		return nil, err
 	}
 
-	var cfg *Config
-
-	//Конфиг сервера
-	serverVal := calcValue(envVal.Server, flagRunAddr, defaultServer)
-
-	//Конфиг сокращателя URL
-	shortenerVal := calcValue(envVal.Shortener, flagShortenerAddr, defaultShortenerHost)
-
-	//Конфиг файл для хранения сокращенных URL
-	filePathVal := calcValue(envVal.FileStoragePath, flagFileStoragePath, defaultFileStoragePath)
-
-	//Конфиг DB
-	dbVal := calcValue(envVal.DataBaseDNS, flagDataBaseDNS, "")
-
-	cfg = &Config{
-		Server: &Server{
-			BaseURL: "/",
-			Listen:  serverVal,
-		},
-		Shortener: &Shortener{
-			Listen: shortenerVal,
-		},
-		FileStoragePath: filePathVal,
-		DataBaseDNS:     dbVal,
-	}
-
-	logger.Info("Server address:", cfg.Server.Listen)
-	logger.Info("BaseURL:", cfg.Shortener.Listen)
-	logger.Info("File storage path:", cfg.FileStoragePath)
-	logger.Info("DataBase DN:", cfg.DataBaseDNS)
+	cfg := mapEnvFlagToConfig(&envVal, cliFlags)
 
 	return cfg, nil
 }
 
-func calcValue(envVal string, fl string, defVal string) string {
-	if envVal == defVal || fl != "" {
-		return fl
-	} else if envVal != defVal {
-		return envVal
-	} else {
-		return defVal
+func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
+	return &Config{
+		Server: &Server{
+			Listen:  calcVal(envVal.Server, cliFlags.flagAddress, defaultServer),
+			BaseURL: "/",
+		},
+		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, cliFlags.flagShorten, defaultShortenerHost)},
+		FileStoragePath: calcVal(envVal.FileStoragePath, cliFlags.flagFilePath, defaultFileStoragePath),
+		DataBaseDNS:     calcVal(envVal.DataBaseDNS, cliFlags.flagDNS, ""),
 	}
+
+}
+
+func calcVal(env string, fl string, def string) string {
+	if env != def {
+		return env
+	}
+	if fl != "" {
+		return fl
+	}
+	return def
 }
