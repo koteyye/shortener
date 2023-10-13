@@ -31,25 +31,24 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	var tableName string
 	logger := *newLogger.Sugar()
 	err = db.QueryRowContext(ctx, "select table_name from information_schema.tables where table_name='shorturl';").Scan(&tableName)
-	switch {
-	case err == nil:
-		break
-	case errors.Is(err, sql.ErrNoRows):
+	if errors.Is(err, sql.ErrNoRows) {
 		_, err := db.ExecContext(ctx, `create table shorturl (
 		id serial not null primary key ,
 		shortURL varchar(256) not null,
 		originalURL varchar not null
 	);`)
+		if err != nil {
+			logger.Fatalw(err.Error(), "event", "create table")
+		}
 		_, err = db.ExecContext(ctx, `create unique index shortURL1 on shorturl (shortURL);`)
 		if err != nil {
-			logger.Fatalw(err.Error(), "event", "crate table")
+			logger.Fatalw(err.Error(), "event", "crate index")
 			return
 		}
-	default:
+	} else {
 		logger.Fatalw(err.Error())
 		return
 	}
-	return
 }
 
 func (d *DBStorage) CreateTable() error {
