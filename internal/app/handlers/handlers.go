@@ -3,9 +3,11 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -75,9 +77,22 @@ func (h Handlers) ShortenerURL(c *gin.Context) {
 	}
 	result, err := h.services.ShortURL(c, buf.String())
 	if err != nil {
+		var errPQ *pq.Error
+		if errors.As(err, &errPQ) {
+			if errPQ.Code == "23505" {
+				result, err = h.services.Shortener.GetShortURLFromOriginal(c, buf.String())
+				if err != nil {
+					newResponse(c, http.StatusBadRequest, err)
+					return
+				}
+				c.String(http.StatusConflict, result)
+				return
+			}
+		}
 		newResponse(c, http.StatusBadRequest, err)
 		return
 	}
+
 	c.String(http.StatusCreated, result)
 }
 
@@ -107,15 +122,22 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 
 	result, err := h.services.ShortURL(c, input.URL)
 	if err != nil {
-		newJSONResponse(c, http.StatusBadRequest, err)
-		return
+		var errPQ *pq.Error
+		if errors.As(err, &errPQ) {
+			if errPQ.Code == "23505" {
+				result, err = h.services.GetShortURLFromOriginal(c, input.URL)
+				if err != nil {
+					newJSONResponse(c, http.StatusBadRequest, err)
+					return
+				}
+				mapResponseToJson(c, http.StatusConflict, result)
+				return
+			} else {
+				newJSONResponse(c, http.StatusBadRequest, err)
+				return
+			}
+		}
+
 	}
-	shortURL, err := json.Marshal(models.ShortURL{Result: result})
-	if err != nil {
-		newJSONResponse(c, http.StatusBadRequest, err)
-		return
-	}
-	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
-	c.Header("Content-type", "application/json")
-	c.String(http.StatusCreated, string(shortURL))
+	mapResponseToJson(c, http.StatusCreated, result)
 }

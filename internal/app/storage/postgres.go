@@ -29,8 +29,8 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	logger := *newLogger.Sugar()
 	_, err = db.ExecContext(ctx, `create table if not exists shorturl (
     id serial not null primary key ,
-    shortURL varchar(256) not null unique ,
-    originalURL varchar not null
+    shortURL varchar(256) not null,
+    originalURL varchar not null unique
 )`)
 	if err != nil {
 		logger.Fatal(err.Error(), "event", "create table and index")
@@ -61,7 +61,15 @@ func (d *DBStorage) AddURL(ctx context.Context, s string, s2 string) error {
 
 func (d *DBStorage) GetURL(ctx context.Context, s string) (string, error) {
 	var result string
-	if err := d.db.SelectContext(ctx, "select originalurl from shorturl where shorturl = $1", s); err != nil {
+	if err := d.db.GetContext(ctx, &result, "select originalurl from shorturl where shorturl = $1", s); err != nil {
+		return "", fmt.Errorf("can't select longURL: %w", err)
+	}
+	return result, nil
+}
+
+func (d *DBStorage) GetShortURL(ctx context.Context, s string) (string, error) {
+	var result string
+	if err := d.db.GetContext(ctx, &result, "select shorturl from shorturl where originalurl = $1", s); err != nil {
 		return "", fmt.Errorf("can't select shortURL: %w", err)
 	}
 	return result, nil

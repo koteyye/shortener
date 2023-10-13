@@ -15,6 +15,7 @@ type URLStorage interface {
 	AddURL(context.Context, string, string) error
 	GetURL(context.Context, string) (string, error)
 	Ping(ctx context.Context) error
+	GetShortURL(context.Context, string) (string, error)
 }
 
 type URLHandler struct {
@@ -54,7 +55,11 @@ func NewURLHandle(db *sqlx.DB, filePath string) *URLHandler {
 }
 
 func (u *URLMap) Ping(_ context.Context) error {
-	return errors.New("в качестве бд используется мок")
+	return errors.New("не поддерживается на моках")
+}
+
+func (u *URLMap) GetShortURL(_ context.Context, _ string) (string, error) {
+	return "", errors.New("не поддерживается на моках")
 }
 
 func (u *URLMap) AddURL(_ context.Context, k, s string) error {

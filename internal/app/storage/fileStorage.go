@@ -23,8 +23,12 @@ func NewFileStorage(filepath string) *FileStorage {
 	}
 }
 
+func (f *FileStorage) GetShortURL(_ context.Context, _ string) (string, error) {
+	return "", errors.New("не поддерживается в файле")
+}
+
 func (f *FileStorage) Ping(_ context.Context) error {
-	return errors.New("в качестве бд используется файл")
+	return errors.New("не поддерживается в файле")
 }
 
 func (f *FileStorage) AddURL(_ context.Context, s string, k string) error {
