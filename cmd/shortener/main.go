@@ -10,8 +10,6 @@ import (
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/koteyye/shortener/server"
 	"go.uber.org/zap"
-	"os/signal"
-	"syscall"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -36,13 +34,10 @@ func main() {
 	sugar.Info("File storage path: ", cfg.FileStoragePath)
 	sugar.Info("DataBase DN: ", cfg.DataBaseDNS)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	defer cancel()
-
 	var db *sqlx.DB
 	//postgres Client
 	if cfg.DataBaseDNS != "" {
-		db, err = newPostgres(ctx, cfg)
+		db, err = newPostgres(context.Background(), cfg)
 		if err != nil {
 			sugar.Fatalw(err.Error(), "event", "connect db")
 		}
