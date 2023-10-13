@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
@@ -11,9 +12,9 @@ import (
 var ErrNotFound = errors.New("не найдено такого значения")
 
 type URLStorage interface {
-	AddURL(string, string) error
-	GetURL(string) (string, error)
-	Ping() error
+	AddURL(context.Context, string, string) error
+	GetURL(context.Context, string) (string, error)
+	Ping(ctx context.Context) error
 }
 
 type URLHandler struct {
@@ -23,10 +24,6 @@ type URLHandler struct {
 type URLMap struct {
 	storage     sync.Map
 	fileStorage *FileStorage
-}
-
-func (u *URLMap) Ping() error {
-	return errors.New("в качестве бд используется мок")
 }
 
 func NewURLHandle(db *sqlx.DB, filePath string) *URLHandler {
@@ -56,12 +53,16 @@ func NewURLHandle(db *sqlx.DB, filePath string) *URLHandler {
 	}
 }
 
-func (u *URLMap) AddURL(k, s string) error {
+func (u *URLMap) Ping(_ context.Context) error {
+	return errors.New("в качестве бд используется мок")
+}
+
+func (u *URLMap) AddURL(_ context.Context, k, s string) error {
 	u.storage.Store(k, s)
 	return nil
 }
 
-func (u *URLMap) GetURL(k string) (string, error) {
+func (u *URLMap) GetURL(_ context.Context, k string) (string, error) {
 
 	url, ok := u.storage.Load(k)
 	if !ok {

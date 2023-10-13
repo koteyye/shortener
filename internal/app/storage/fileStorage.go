@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,10 +16,6 @@ type FileStorage struct {
 	fileReader *FileReader
 }
 
-func (f *FileStorage) Ping() error {
-	return errors.New("в качестве бд используется файл")
-}
-
 func NewFileStorage(filepath string) *FileStorage {
 	return &FileStorage{
 		fileWriter: &FileWriter{filePath: filepath},
@@ -26,7 +23,11 @@ func NewFileStorage(filepath string) *FileStorage {
 	}
 }
 
-func (f *FileStorage) AddURL(s string, k string) error {
+func (f *FileStorage) Ping(_ context.Context) error {
+	return errors.New("в качестве бд используется файл")
+}
+
+func (f *FileStorage) AddURL(_ context.Context, s string, k string) error {
 	var id int
 
 	reader, err := f.fileReader.NewReader()
@@ -63,7 +64,7 @@ func (f *FileStorage) AddURL(s string, k string) error {
 	return nil
 }
 
-func (f *FileStorage) GetURL(k string) (string, error) {
+func (f *FileStorage) GetURL(_ context.Context, k string) (string, error) {
 	reader, err := f.fileReader.NewReader()
 	if err != nil {
 		return "", fmt.Errorf("err reader: %w", err)
