@@ -30,7 +30,7 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	api := r.Group("/api")
 	{
 		api.POST("/shorten", h.ShortenerURLJSON)
-		api.GET(baseURL+"/shorten/batch", h.Batch)
+		api.POST(baseURL+"/shorten/batch", h.Batch)
 	}
 	return r
 }
@@ -47,6 +47,8 @@ func (h Handlers) Batch(c *gin.Context) {
 		newJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
+
+	h.logger.Info(input)
 
 	list, err := h.services.Shortener.Batch(c, input)
 
