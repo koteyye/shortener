@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
@@ -28,26 +27,14 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	}
 	defer newLogger.Sync()
 
-	var tableName string
 	logger := *newLogger.Sugar()
-	err = db.QueryRowContext(ctx, "select table_name from information_schema.tables where table_name='shorturl';").Scan(&tableName)
-	if errors.Is(err, sql.ErrNoRows) {
-		_, err := db.ExecContext(ctx, `create table shorturl (
-		id serial not null primary key ,
-		shortURL varchar(256) not null,
-		originalURL varchar not null
-	);`)
-		if err != nil {
-			logger.Fatalw(err.Error(), "event", "create table")
-		}
-		_, err = db.ExecContext(ctx, `create unique index shortURL1 on shorturl (shortURL);`)
-		if err != nil {
-			logger.Fatalw(err.Error(), "event", "crate index")
-			return
-		}
-	} else {
-		logger.Fatalw(err.Error())
-		return
+	_, err = db.ExecContext(ctx, `create table if not exists shorturl (
+    id serial not null primary key ,
+    shortURL varchar(256) not null unique ,
+    originalURL varchar not null
+)`)
+	if err != nil {
+		logger.Fatal(err.Error(), "event", "create table and index")
 	}
 }
 
