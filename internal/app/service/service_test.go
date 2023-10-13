@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
@@ -40,8 +41,8 @@ func TestShortenerService_LongURL(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			//Добавляем в маппу тестовую ссылку
-			storages.AddURL("bfebrehbrehgbre", "https://practicum.yandex.ru/")
-			url, err := s.LongURL(test.value)
+			storages.AddURL(context.Background(), "bfebrehbrehgbre", "https://practicum.yandex.ru/")
+			url, err := s.LongURL(context.Background(), test.value)
 			if err != nil {
 				assert.Error(t, err)
 			} else {
@@ -81,7 +82,7 @@ func TestShortenerService_ShortURL(t *testing.T) {
 	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			url, err := s.ShortURL(test.value)
+			url, err := s.ShortURL(context.Background(), test.value)
 			if err != nil {
 				assert.Error(t, err)
 			} else {
