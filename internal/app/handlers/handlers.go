@@ -26,11 +26,35 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
 	r.GET(baseURL+"/ping", h.Ping)
+	r.GET(baseURL+"/batch", h.Batch)
 	api := r.Group("/api")
 	{
 		api.POST("/shorten", h.ShortenerURLJSON)
 	}
 	return r
+}
+
+func (h Handlers) Batch(c *gin.Context) {
+	var input []*models.OriginURLList
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &input); err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	list, err := h.services.Shortener.Batch(c, input)
+
+	if err != nil {
+		newJSONResponse(c, http.StatusBadRequest, err)
+	}
+	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
+	c.Header("Content-type", "application/json")
+	c.JSON(http.StatusCreated, list)
 }
 
 func (h Handlers) Ping(c *gin.Context) {
