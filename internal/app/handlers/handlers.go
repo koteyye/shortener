@@ -130,14 +130,16 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 					newJSONResponse(c, http.StatusBadRequest, err)
 					return
 				}
-				mapResponseToJson(c, http.StatusConflict, result)
+				mapResponseToJSON(c, http.StatusConflict, result)
 				return
 			} else {
 				newJSONResponse(c, http.StatusBadRequest, err)
 				return
 			}
+		} else {
+			newJSONResponse(c, http.StatusBadRequest, err)
+			return
 		}
-
 	}
-	mapResponseToJson(c, http.StatusCreated, result)
+	mapResponseToJSON(c, http.StatusCreated, result)
 }
