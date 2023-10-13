@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -51,22 +52,16 @@ func (d *DBStorage) CreateTable() error {
 	return nil
 }
 
-func (d *DBStorage) AddURL(ctx context.Context, s string, s2 string) error {
-	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl) values ($1, $2)", s, s2)
-	if err != nil {
-		return fmt.Errorf("can't add URL to DB: %w", err)
-	}
-	return nil
+func (d *DBStorage) AddURL(s string, s2 string) error {
+	//TODO implement me
+	return errors.New("not implement")
 }
 
-func (d *DBStorage) GetURL(ctx context.Context, s string) (string, error) {
-	var result string
-	if err := d.db.GetContext(ctx, &result, "select originalurl from shorturl where shorturl = $1", s); err != nil {
-		return "", fmt.Errorf("can't select shortURL: %w", err)
-	}
-	return result, nil
+func (d *DBStorage) GetURL(s string) (string, error) {
+	//TODO implement me
+	return "", errors.New("not implement")
 }
 
-func (d *DBStorage) Ping(ctx context.Context) error {
-	return d.db.PingContext(ctx)
+func (d *DBStorage) Ping() error {
+	return d.db.Ping()
 }
