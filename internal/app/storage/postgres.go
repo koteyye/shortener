@@ -35,14 +35,14 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	case err == nil:
 		break
 	case errors.Is(err, sql.ErrNoRows):
-		_, errN := db.ExecContext(ctx, `create table shorturl (
+		_, err := db.ExecContext(ctx, `create table shorturl (
 		id serial not null primary key ,
 		shortURL varchar(256) not null,
 		originalURL varchar not null
 	);`)
-		_, errN = db.ExecContext(ctx, `create unique index shortURL1 on shorturl (shortURL);`)
-		if errN != nil {
-			logger.Fatalw(errN.Error(), "event", "crate table")
+		_, err = db.ExecContext(ctx, `create unique index shortURL1 on shorturl (shortURL);`)
+		if err != nil {
+			logger.Fatalw(err.Error(), "event", "crate table")
 			return
 		}
 	default:
