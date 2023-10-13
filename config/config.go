@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	defaultServer          = "localhost:8081"
-	defaultShortenerHost   = "http://localhost:8081"
+	defaultServer          = "localhost:8080"
+	defaultShortenerHost   = "http://localhost:8080"
 	defaultFileStoragePath = "/tmp/short-url-db.json"
 )
 
