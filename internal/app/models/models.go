@@ -13,3 +13,13 @@ type FileString struct {
 	ShortURL    string `json:"shortURL"`
 	OriginalURL string `json:"originalURL"`
 }
+
+type URLList struct {
+	ID       string `json:"correlation_id"`
+	ShortURL string `json:"short_url"`
+}
+
+type OriginURLList struct {
+	ID        string `json:"correlation_id"`
+	OriginURL string `json:"original_url"`
+}

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"net/url"
 	"strings"
@@ -24,6 +25,18 @@ type ShortenerService struct {
 
 func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener) *ShortenerService {
 	return &ShortenerService{storage: storage, shortener: shortener}
+}
+
+func (s ShortenerService) Batch(ctx context.Context, originalList []*models.OriginURLList) ([]*models.URLList, error) {
+	var urllist []*models.URLList
+	for _, origin := range originalList {
+		short, err := s.ShortURL(ctx, origin.OriginURL)
+		if err != nil {
+			return nil, err
+		}
+		urllist = append(urllist, &models.URLList{ID: origin.ID, ShortURL: short})
+	}
+	return urllist, nil
 }
 
 func (s ShortenerService) Ping(ctx context.Context) error {

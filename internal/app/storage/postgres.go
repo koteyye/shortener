@@ -61,7 +61,7 @@ func (d *DBStorage) AddURL(ctx context.Context, s string, s2 string) error {
 
 func (d *DBStorage) GetURL(ctx context.Context, s string) (string, error) {
 	var result string
-	if err := d.db.SelectContext(ctx, "select originalurl from shorturl where shorturl = $1", s); err != nil {
+	if err := d.db.GetContext(ctx, &result, "select originalurl from shorturl where shorturl = $1", s); err != nil {
 		return "", fmt.Errorf("can't select shortURL: %w", err)
 	}
 	return result, nil
