@@ -32,10 +32,10 @@ func TestServer_Run(t *testing.T) {
 	mux.HandleFunc(`/`, mainPage)
 
 	go func() {
-		_ = s.Run("127.0.0.1:8081", mux)
+		_ = s.Run("127.0.0.1:8082", mux)
 	}()
 	defer s.Shutdown(context.Background())
-	r, _ := http.NewRequest(http.MethodGet, "http://localhost:8081", nil)
+	r, _ := http.NewRequest(http.MethodGet, "http://localhost:8082", nil)
 	res, err := http.DefaultClient.Do(r)
 	assert.NoError(t, err)
 	if err != nil {
