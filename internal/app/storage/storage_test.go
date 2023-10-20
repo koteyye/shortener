@@ -36,9 +36,9 @@ func TestStorage_AddURL(t *testing.T) {
 }
 
 func TestStorage_GetURL(t *testing.T) {
-	s, err := NewURLHandle(nil, "")
+	s, _ := NewURLHandle(nil, "")
 	//Кладем значение для теста
-	err = s.AddURL(context.Background(), "sdvgdsgv", "https://practicum.yandex.ru/")
+	err := s.AddURL(context.Background(), "sdvgdsgv", "https://practicum.yandex.ru/")
 	assert.NoError(t, err)
 
 	tests := []struct {

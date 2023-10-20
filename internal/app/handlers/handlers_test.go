@@ -231,7 +231,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 		},
 	}
 
-	storages, err := storage.NewURLHandle(nil, file.Name())
+	storages, _ := storage.NewURLHandle(nil, file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
