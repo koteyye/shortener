@@ -25,6 +25,10 @@ func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener
 	return &ShortenerService{storage: storage, shortener: shortener}
 }
 
+func (s ShortenerService) Ping() error {
+	return s.storage.Ping()
+}
+
 func (s ShortenerService) LongURL(shortURL string) (string, error) {
 	res, err := s.storage.GetURL(shortURL)
 	if err != nil {

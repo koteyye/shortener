@@ -31,6 +31,7 @@ var cfg = config.Config{
 }
 
 func TestHandlers_ShortenerURL(t *testing.T) {
+
 	testDir := t.TempDir()
 	file, _ := os.CreateTemp(testDir, "db")
 
@@ -77,7 +78,7 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(file.Name())
+	storages := storage.NewURLHandle(nil, file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -152,7 +153,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 			},
 		},
 	}
-	storages := storage.NewURLHandle(file.Name())
+	storages := storage.NewURLHandle(nil, file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 
@@ -227,7 +228,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(file.Name())
+	storages := storage.NewURLHandle(nil, file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"

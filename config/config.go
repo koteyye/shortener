@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
-	"strings"
 )
 
 const (
@@ -17,6 +16,7 @@ type Config struct {
 	Server          *Server
 	Shortener       *Shortener
 	FileStoragePath string
+	DataBaseDNS     string
 }
 
 type Server struct {
@@ -29,65 +29,57 @@ type Shortener struct {
 }
 
 type ENVValue struct {
-	Server          string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
-	Shortener       string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"/tmp/short-url-db.json"`
+	Server          string `env:"SERVER_ADDRESS"`
+	Shortener       string `env:"BASE_URL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	DataBaseDNS     string `env:"DATABASE_DNS"`
+}
+
+type cliFlag struct {
+	flagAddress  string
+	flagShorten  string
+	flagFilePath string
+	flagDNS      string
 }
 
 func GetConfig() (*Config, error) {
-	var flagRunAddr string
-	var flagShortenerAddr string
-	var flagFileStoragePath string
-
-	flag.StringVar(&flagRunAddr, "a", defaultServer, "address and port to run server")
-	flag.StringVar(&flagShortenerAddr, "b", defaultShortenerHost, "address and port to shortener")
-	flag.StringVar(&flagFileStoragePath, "f", defaultFileStoragePath, "file path for DB")
+	cliFlags := &cliFlag{}
+	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
+	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
+	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
+	flag.StringVar(&cliFlags.flagDNS, "d", "", "DNS")
 	flag.Parse()
+	fmt.Println(cliFlags)
 
 	var envVal ENVValue
 	if err := env.Parse(&envVal); err != nil {
 		return nil, err
 	}
 
-	var cfg *Config
-
-	//Конфиг сервера
-	serverVal := calcValue(envVal.Server, flagRunAddr, defaultServer)
-
-	//Конфиг сокращателя URL
-	shortenerVal := calcValue(envVal.Shortener, flagShortenerAddr, defaultShortenerHost)
-
-	//Конфиг файл для хранения сокращенных URL
-	filePathVal := calcValue(envVal.FileStoragePath, flagFileStoragePath, defaultFileStoragePath)
-
-	cfg = &Config{
-		Server: &Server{
-			BaseURL: "/",
-			Listen:  serverVal,
-		},
-		Shortener: &Shortener{
-			Listen: shortenerVal,
-		},
-		FileStoragePath: filePathVal,
-	}
-
-	fmt.Printf("\nServer address %v\n", cfg.Server.Listen)
-	fmt.Printf("Base url %v\n", cfg.Shortener.Listen)
-	fmt.Printf("File storage path %v\n", cfg.FileStoragePath)
+	cfg := mapEnvFlagToConfig(&envVal, cliFlags)
 
 	return cfg, nil
 }
 
-func calcValue(envVal string, fl string, defVal string) string {
-
-	val := defVal
-
-	if !strings.Contains(envVal, defVal) {
-		val = envVal
+func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
+	return &Config{
+		Server: &Server{
+			Listen:  calcVal(envVal.Server, cliFlags.flagAddress, defaultServer),
+			BaseURL: "/",
+		},
+		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, cliFlags.flagShorten, defaultShortenerHost)},
+		FileStoragePath: calcVal(envVal.FileStoragePath, cliFlags.flagFilePath, defaultFileStoragePath),
+		DataBaseDNS:     calcVal(envVal.DataBaseDNS, cliFlags.flagDNS, ""),
 	}
-	if !strings.Contains(fl, defVal) {
-		val = fl
-	}
 
-	return val
+}
+
+func calcVal(env string, fl string, def string) string {
+	if env != "" {
+		return env
+	}
+	if fl != "" {
+		return fl
+	}
+	return def
 }
