@@ -79,7 +79,8 @@ func TestHandlers_ShortenerURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(nil, file.Name())
+	storages, err := storage.NewURLHandle(nil, file.Name())
+	assert.NoError(t, err)
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"
@@ -154,7 +155,8 @@ func TestHandlers_LongerURL(t *testing.T) {
 			},
 		},
 	}
-	storages := storage.NewURLHandle(nil, file.Name())
+	storages, err := storage.NewURLHandle(nil, file.Name())
+	assert.NoError(t, err)
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 
@@ -229,7 +231,7 @@ func TestHandlers_ShortenerURLJSON(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(nil, file.Name())
+	storages, _ := storage.NewURLHandle(nil, file.Name())
 	services := service.NewService(storages, cfg.Shortener)
 	h := NewHandlers(services, zap.SugaredLogger{})
 	hostName := cfg.Shortener.Listen + "/"

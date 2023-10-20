@@ -12,6 +12,7 @@ type Shortener interface {
 	LongURL(ctx context.Context, shortURL string) (string, error)
 	Ping(ctx context.Context) error
 	Batch(ctx context.Context, originalList []*models.OriginURLList) ([]*models.URLList, error)
+	GetShortURLFromOriginal(ctx context.Context, originalURL string) (string, error)
 }
 
 type Service struct {

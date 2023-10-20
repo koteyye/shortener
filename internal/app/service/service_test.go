@@ -36,7 +36,7 @@ func TestShortenerService_LongURL(t *testing.T) {
 		},
 	}
 
-	storages := storage.NewURLHandle(nil, file.Name())
+	storages, _ := storage.NewURLHandle(nil, file.Name())
 	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestShortenerService_ShortURL(t *testing.T) {
 			want:  "",
 		},
 	}
-	storages := storage.NewURLHandle(nil, file.Name())
+	storages, _ := storage.NewURLHandle(nil, file.Name())
 	s := NewService(storages, shortenerCfg)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -70,6 +70,18 @@ func (s ShortenerService) ShortURL(ctx context.Context, urlVal string) (string, 
 	return urlRes, nil
 }
 
+func (s ShortenerService) GetShortURLFromOriginal(ctx context.Context, urlVal string) (string, error) {
+	short, err := s.storage.GetShortURL(ctx, urlVal)
+	if err != nil {
+		return "", err
+	}
+	urlRes, err := url.JoinPath(s.shortener.Listen, "/", short)
+	if err != nil {
+		return "", err
+	}
+	return urlRes, nil
+}
+
 func generateUnitKey() string {
 	t := time.Now().UnixNano()
 

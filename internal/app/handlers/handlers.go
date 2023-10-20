@@ -3,9 +3,12 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
+	"github.com/koteyye/shortener/internal/app/storage"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -26,11 +29,10 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
 	r.GET(baseURL+"/ping", h.Ping)
-	r.GET(baseURL+"/batch", h.Batch)
 	api := r.Group("/api")
 	{
 		api.POST("/shorten", h.ShortenerURLJSON)
-		api.POST(baseURL+"/shorten/batch", h.Batch)
+		api.POST("/shorten/batch", h.Batch)
 	}
 	return r
 }
@@ -48,12 +50,11 @@ func (h Handlers) Batch(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info(input)
-
 	list, err := h.services.Shortener.Batch(c, input)
 
 	if err != nil {
 		newJSONResponse(c, http.StatusBadRequest, err)
+		return
 	}
 	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
 	c.Header("Content-type", "application/json")
@@ -78,9 +79,22 @@ func (h Handlers) ShortenerURL(c *gin.Context) {
 	}
 	result, err := h.services.ShortURL(c, buf.String())
 	if err != nil {
+		var errPQ *pq.Error
+		if errors.As(err, &errPQ) {
+			if errPQ.Code == storage.PqDuplicateErr {
+				result, err = h.services.Shortener.GetShortURLFromOriginal(c, buf.String())
+				if err != nil {
+					newResponse(c, http.StatusBadRequest, err)
+					return
+				}
+				c.String(http.StatusConflict, result)
+				return
+			}
+		}
 		newResponse(c, http.StatusBadRequest, err)
 		return
 	}
+
 	c.String(http.StatusCreated, result)
 }
 
@@ -110,15 +124,22 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 
 	result, err := h.services.ShortURL(c, input.URL)
 	if err != nil {
+		var errPQ *pq.Error
+		if errors.As(err, &errPQ) {
+			if errPQ.Code == storage.PqDuplicateErr {
+				result, err = h.services.GetShortURLFromOriginal(c, input.URL)
+				if err != nil {
+					newJSONResponse(c, http.StatusBadRequest, err)
+					return
+				}
+				mapResponseToJSON(c, http.StatusConflict, result)
+				return
+			}
+			newJSONResponse(c, http.StatusBadRequest, err)
+			return
+		}
 		newJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	shortURL, err := json.Marshal(models.ShortURL{Result: result})
-	if err != nil {
-		newJSONResponse(c, http.StatusBadRequest, err)
-		return
-	}
-	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
-	c.Header("Content-type", "application/json")
-	c.String(http.StatusCreated, string(shortURL))
+	mapResponseToJSON(c, http.StatusCreated, result)
 }
