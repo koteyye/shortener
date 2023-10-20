@@ -29,10 +29,10 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 	r.POST(baseURL, h.ShortenerURL)
 	r.GET(baseURL+":id", h.LongerURL)
 	r.GET(baseURL+"/ping", h.Ping)
-	r.GET(baseURL+"/batch", h.Batch)
 	api := r.Group("/api")
 	{
 		api.POST("/shorten", h.ShortenerURLJSON)
+		api.POST("/shorten/batch", h.Batch)
 	}
 	return r
 }
@@ -54,6 +54,7 @@ func (h Handlers) Batch(c *gin.Context) {
 
 	if err != nil {
 		newJSONResponse(c, http.StatusBadRequest, err)
+		return
 	}
 	//здесь лучше использовать c.JSON, но по заданию надо задействовать encoding/json
 	c.Header("Content-type", "application/json")
