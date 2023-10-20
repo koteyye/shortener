@@ -2,8 +2,6 @@ package storage
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -28,26 +26,14 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	}
 	defer newLogger.Sync()
 
-	var tableName string
 	logger := *newLogger.Sugar()
-	err = db.QueryRowContext(ctx, "select table_name from information_schema.tables where table_name='shorturl';").Scan(&tableName)
-	if errors.Is(err, sql.ErrNoRows) {
-		_, err := db.ExecContext(ctx, `create table shorturl (
-		id serial not null primary key ,
-		shortURL varchar(256) not null,
-		originalURL varchar not null
-	);`)
-		if err != nil {
-			logger.Fatalw(err.Error(), "event", "create table")
-		}
-		_, err = db.ExecContext(ctx, `create unique index shortURL1 on shorturl (shortURL);`)
-		if err != nil {
-			logger.Fatalw(err.Error(), "event", "crate index")
-			return
-		}
-	} else {
-		logger.Fatalw(err.Error())
-		return
+	_, err = db.ExecContext(ctx, `create table if not exists shorturl (
+    id serial not null primary key ,
+    shortURL varchar(256) not null unique ,
+    originalURL varchar not null
+)`)
+	if err != nil {
+		logger.Fatal(err.Error(), "event", "create table and index")
 	}
 }
 
@@ -65,16 +51,22 @@ func (d *DBStorage) CreateTable() error {
 	return nil
 }
 
-func (d *DBStorage) AddURL(s string, s2 string) error {
-	//TODO implement me
-	return errors.New("not implement")
+func (d *DBStorage) AddURL(ctx context.Context, s string, s2 string) error {
+	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl) values ($1, $2)", s, s2)
+	if err != nil {
+		return fmt.Errorf("can't add URL to DB: %w", err)
+	}
+	return nil
 }
 
-func (d *DBStorage) GetURL(s string) (string, error) {
-	//TODO implement me
-	return "", errors.New("not implement")
+func (d *DBStorage) GetURL(ctx context.Context, s string) (string, error) {
+	var result string
+	if err := d.db.SelectContext(ctx, "select originalurl from shorturl where shorturl = $1", s); err != nil {
+		return "", fmt.Errorf("can't select shortURL: %w", err)
+	}
+	return result, nil
 }
 
-func (d *DBStorage) Ping() error {
-	return d.db.Ping()
+func (d *DBStorage) Ping(ctx context.Context) error {
+	return d.db.PingContext(ctx)
 }

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -23,9 +24,9 @@ func TestStorage_AddURL(t *testing.T) {
 	s := NewURLHandle(nil, "")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s.AddURL(test.key, test.val)
+			s.AddURL(context.Background(), test.key, test.val)
 
-			result, err := s.GetURL(test.key)
+			result, err := s.GetURL(context.Background(), test.key)
 
 			assert.NoError(t, err)
 			assert.Equal(t, test.want, result)
@@ -36,7 +37,7 @@ func TestStorage_AddURL(t *testing.T) {
 func TestStorage_GetURL(t *testing.T) {
 	s := NewURLHandle(nil, "")
 	//Кладем значение для теста
-	err := s.AddURL("sdvgdsgv", "https://practicum.yandex.ru/")
+	err := s.AddURL(context.Background(), "sdvgdsgv", "https://practicum.yandex.ru/")
 	assert.NoError(t, err)
 
 	tests := []struct {
@@ -60,7 +61,7 @@ func TestStorage_GetURL(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			url, err := s.GetURL(test.key)
+			url, err := s.GetURL(context.Background(), test.key)
 
 			if !test.wantErr {
 				assert.Equal(t, test.want, url)

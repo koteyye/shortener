@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/config"
@@ -158,7 +159,7 @@ func TestHandlers_LongerURL(t *testing.T) {
 	h := NewHandlers(services, zap.SugaredLogger{})
 
 	//Предварительно добавляется валидное значение в Storage
-	storages.AddURL("MTY5NDAzNTIwNjI4NjQyNzIwOQ==", "https://practicum.yandex.ru/")
+	storages.AddURL(context.Background(), "MTY5NDAzNTIwNjI4NjQyNzIwOQ==", "https://practicum.yandex.ru/")
 	for _, test := range tests {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)

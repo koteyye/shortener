@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -25,19 +26,19 @@ func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener
 	return &ShortenerService{storage: storage, shortener: shortener}
 }
 
-func (s ShortenerService) Ping() error {
-	return s.storage.Ping()
+func (s ShortenerService) Ping(ctx context.Context) error {
+	return s.storage.Ping(ctx)
 }
 
-func (s ShortenerService) LongURL(shortURL string) (string, error) {
-	res, err := s.storage.GetURL(shortURL)
+func (s ShortenerService) LongURL(ctx context.Context, shortURL string) (string, error) {
+	res, err := s.storage.GetURL(ctx, shortURL)
 	if err != nil {
 		return "", err
 	}
 	return res, nil
 }
 
-func (s ShortenerService) ShortURL(urlVal string) (string, error) {
+func (s ShortenerService) ShortURL(ctx context.Context, urlVal string) (string, error) {
 	if urlVal == "" {
 		return "", ErrNullRequestBody
 	}
@@ -46,7 +47,7 @@ func (s ShortenerService) ShortURL(urlVal string) (string, error) {
 	}
 
 	res := generateUnitKey()
-	if err := s.storage.AddURL(res, urlVal); err != nil {
+	if err := s.storage.AddURL(ctx, res, urlVal); err != nil {
 		return "", fmt.Errorf("add url: %w", err)
 	}
 	urlRes, err := url.JoinPath(s.shortener.Listen, "/", res)

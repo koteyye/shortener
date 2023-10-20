@@ -34,7 +34,7 @@ func (h Handlers) InitRoutes(baseURL string) *gin.Engine {
 }
 
 func (h Handlers) Ping(c *gin.Context) {
-	err := h.services.Ping()
+	err := h.services.Ping(c)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
@@ -49,7 +49,7 @@ func (h Handlers) ShortenerURL(c *gin.Context) {
 		newResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	result, err := h.services.ShortURL(buf.String())
+	result, err := h.services.ShortURL(c, buf.String())
 	if err != nil {
 		newResponse(c, http.StatusBadRequest, err)
 		return
@@ -59,7 +59,7 @@ func (h Handlers) ShortenerURL(c *gin.Context) {
 
 func (h Handlers) LongerURL(c *gin.Context) {
 	id := c.Param("id")
-	resURL, err := h.services.LongURL(id)
+	resURL, err := h.services.LongURL(c, id)
 	if err != nil {
 		newResponse(c, http.StatusBadRequest, err)
 		return
@@ -81,7 +81,7 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 		return
 	}
 
-	result, err := h.services.ShortURL(input.URL)
+	result, err := h.services.ShortURL(c, input.URL)
 	if err != nil {
 		newJSONResponse(c, http.StatusBadRequest, err)
 		return
