@@ -44,7 +44,10 @@ func main() {
 	}
 
 	//init internal
-	storages := storage.NewURLHandle(db, cfg.FileStoragePath)
+	storages, err := storage.NewURLHandle(db, cfg.FileStoragePath)
+	if err != nil {
+		sugar.Fatalw(err.Error(), "event", "init storage")
+	}
 	services := service.NewService(storages, cfg.Shortener)
 	handler := handlers.NewHandlers(services, sugar)
 

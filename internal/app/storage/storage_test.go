@@ -21,7 +21,8 @@ func TestStorage_AddURL(t *testing.T) {
 		},
 	}
 
-	s := NewURLHandle(nil, "")
+	s, err := NewURLHandle(nil, "")
+	assert.NoError(t, err)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			s.AddURL(context.Background(), test.key, test.val)
@@ -35,9 +36,9 @@ func TestStorage_AddURL(t *testing.T) {
 }
 
 func TestStorage_GetURL(t *testing.T) {
-	s := NewURLHandle(nil, "")
+	s, err := NewURLHandle(nil, "")
 	//Кладем значение для теста
-	err := s.AddURL(context.Background(), "sdvgdsgv", "https://practicum.yandex.ru/")
+	err = s.AddURL(context.Background(), "sdvgdsgv", "https://practicum.yandex.ru/")
 	assert.NoError(t, err)
 
 	tests := []struct {

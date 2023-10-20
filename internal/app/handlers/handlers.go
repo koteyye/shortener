@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
+	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"io"
@@ -79,7 +80,7 @@ func (h Handlers) ShortenerURL(c *gin.Context) {
 	if err != nil {
 		var errPQ *pq.Error
 		if errors.As(err, &errPQ) {
-			if errPQ.Code == "23505" {
+			if errPQ.Code == storage.PqDuplicateErr {
 				result, err = h.services.Shortener.GetShortURLFromOriginal(c, buf.String())
 				if err != nil {
 					newResponse(c, http.StatusBadRequest, err)
@@ -124,7 +125,7 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 	if err != nil {
 		var errPQ *pq.Error
 		if errors.As(err, &errPQ) {
-			if errPQ.Code == "23505" {
+			if errPQ.Code == storage.PqDuplicateErr {
 				result, err = h.services.GetShortURLFromOriginal(c, input.URL)
 				if err != nil {
 					newJSONResponse(c, http.StatusBadRequest, err)
@@ -132,14 +133,12 @@ func (h Handlers) ShortenerURLJSON(c *gin.Context) {
 				}
 				mapResponseToJSON(c, http.StatusConflict, result)
 				return
-			} else {
-				newJSONResponse(c, http.StatusBadRequest, err)
-				return
 			}
-		} else {
 			newJSONResponse(c, http.StatusBadRequest, err)
 			return
 		}
+		newJSONResponse(c, http.StatusBadRequest, err)
+		return
 	}
 	mapResponseToJSON(c, http.StatusCreated, result)
 }

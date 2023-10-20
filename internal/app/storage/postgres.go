@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	PqDuplicateErr = "23505"
+)
+
 type DBStorage struct {
 	db *sqlx.DB
 }
