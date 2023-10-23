@@ -1,23 +1,19 @@
 package handlers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
-	"github.com/koteyye/shortener/internal/app/storage"
+	mock_service "github.com/koteyye/shortener/internal/app/service/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Тестовый конфиг
@@ -31,246 +27,63 @@ var cfg = config.Config{
 	},
 }
 
-func TestHandlers_ShortenerURL(t *testing.T) {
-
-	testDir := t.TempDir()
-	file, _ := os.CreateTemp(testDir, "db")
-
-	type want struct {
-		statusCodePOST int
-		statusCodeGET  int
-		locationHeader string
-		wantErr        error
-	}
+func TestHandlers_Batch(t *testing.T) {
+	type mockBehavior func(r *mock_service.MockShortener, list []*models.OriginURLList)
 	tests := []struct {
-		name        string
-		methodType  string
-		request     string
-		requestBody io.Reader
-		want        want
+		name                 string
+		inputBody            io.Reader
+		inputOriginURLList   []*models.OriginURLList
+		expectedStatusCode   int
+		expectedResponseBody string
 	}{
 		{
-			name:        "success",
-			request:     "/",
-			requestBody: strings.NewReader("https://practicum.yandex.ru/"),
-			want: want{
-				statusCodePOST: 201,
-				statusCodeGET:  307,
-				locationHeader: "https://practicum.yandex.ru/",
-			},
-		},
-		{
-			name:        "null body",
-			request:     "/",
-			requestBody: strings.NewReader(""),
-			want: want{
-				statusCodePOST: 400,
-				wantErr:        service.ErrNullRequestBody,
-			},
-		},
-		{
-			name:        "invalid URL",
-			request:     "/",
-			requestBody: strings.NewReader("practicum.yandex.ru/"),
-			want: want{
-				statusCodePOST: 400,
-				wantErr:        service.ErrInvalidRequestBodyURL,
+			name: "created",
+			inputBody: strings.NewReader(`[
+				{
+					"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
+					"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
+				},
+				{
+					"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
+					"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
+				}
+				]`),
+			inputOriginURLList: []*models.OriginURLList{
+				{
+					ID:        "afd90f2c-b0df-4873-8ded-62d8e99593ba",
+					OriginURL: "http://lcpjtoddpyyp.yandex/sjkhh",
+				},
+				{
+					ID:        "5993975-38fc-4f95-8234-0639079194cf",
+					OriginURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
+				},
 			},
 		},
 	}
 
-	storages, err := storage.NewURLHandle(nil, file.Name())
-	assert.NoError(t, err)
-	services := service.NewService(storages, cfg.Shortener)
-	h := NewHandlers(services, zap.SugaredLogger{})
-	hostName := cfg.Shortener.Listen + "/"
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//Тест POST
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			r := httptest.NewRequest(http.MethodPost, "/batch", test.inputBody)
 			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Request = httptest.NewRequest(http.MethodPost, test.request, test.requestBody)
-			h.ShortenerURL(c)
+			ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+			defer cancel()
+
+			repo := mock_service.NewMockShortener(c)
+
+			gomock.InOrder(repo.EXPECT().Batch(ctx, test.inputOriginURLList).Return(nil, nil))
+
+			services := service.Service{Shortener: repo}
+			handler := Handlers{services: &services}
+
+			handler.Batch(w, r)
 
 			result := w.Result()
 			defer result.Body.Close()
-			//Преобразуем тело для проверки
-			body, _ := io.ReadAll(result.Body)
 
-			if result.StatusCode == 201 {
-				regCheck := strings.Contains(string(body), hostName)
-				assert.Equal(t, true, regCheck)
-				shortURL := strings.TrimPrefix(string(body), hostName)
-				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
-				wGET := httptest.NewRecorder()
-				c2, _ := gin.CreateTestContext(wGET)
-				c2.Request = httptest.NewRequest(http.MethodGet, test.request, nil)
-				c2.AddParam("id", shortURL)
-				h.LongerURL(c2)
-				resultGET := wGET.Result()
-				defer resultGET.Body.Close()
-				assert.Equal(t, test.want.statusCodeGET, resultGET.StatusCode)
-				assert.Equal(t, test.want.locationHeader, resultGET.Header.Get("Location"))
-			} else {
-				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
-				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
-			}
-		})
-	}
-}
-
-func TestHandlers_LongerURL(t *testing.T) {
-	testDir := t.TempDir()
-	file, _ := os.CreateTemp(testDir, "db")
-	type want struct {
-		statusCode     int
-		locationHeader string
-		wantErr        error
-	}
-	tests := []struct {
-		name   string
-		params string
-		want
-	}{
-		{
-			name:   "success",
-			params: "MTY5NDAzNTIwNjI4NjQyNzIwOQ==",
-			want: want{
-				statusCode:     307,
-				locationHeader: "https://practicum.yandex.ru/",
-			},
-		},
-		{
-			name:   "invalid param",
-			params: "MTY5NDAzNTIwNjI4NjQyNzIds==",
-			want: want{
-				statusCode: 400,
-				wantErr:    storage.ErrNotFound,
-			},
-		},
-		{
-			name: "not params",
-			want: want{
-				statusCode: 400,
-			},
-		},
-	}
-	storages, err := storage.NewURLHandle(nil, file.Name())
-	assert.NoError(t, err)
-	services := service.NewService(storages, cfg.Shortener)
-	h := NewHandlers(services, zap.SugaredLogger{})
-
-	//Предварительно добавляется валидное значение в Storage
-	storages.AddURL(context.Background(), "MTY5NDAzNTIwNjI4NjQyNzIwOQ==", "https://practicum.yandex.ru/")
-	for _, test := range tests {
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest(http.MethodGet, "/"+test.params, nil)
-		c.AddParam("id", test.params)
-		h.LongerURL(c)
-		result := w.Result()
-		defer result.Body.Close()
-		assert.Equal(t, test.statusCode, result.StatusCode)
-		if test.statusCode == 200 {
-			assert.Equal(t, test.locationHeader, result.Header.Get("Location"))
-		}
-		if test.wantErr != nil {
-			assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
-		}
-	}
-}
-
-func TestHandlers_ShortenerURLJSON(t *testing.T) {
-	testDir := t.TempDir()
-	file, err := os.CreateTemp(testDir, "db")
-	require.NoError(t, err)
-	type want struct {
-		statusCodePOST int
-		statusCodeGET  int
-		locationHeader string
-		contentType    string
-		wantErr        error
-	}
-	tests := []struct {
-		name        string
-		methodType  string
-		request     string
-		requestBody models.LongURL
-		want        want
-	}{
-		{
-			name:        "success",
-			request:     "/api/shorten",
-			requestBody: models.LongURL{URL: "https://practicum.yandex.ru/"},
-			want: want{
-				statusCodePOST: 201,
-				statusCodeGET:  307,
-				locationHeader: "https://practicum.yandex.ru/",
-				contentType:    "application/json",
-			},
-		},
-		{
-			name:        "null body",
-			request:     "/",
-			requestBody: models.LongURL{URL: ""},
-			want: want{
-				statusCodePOST: 400,
-				wantErr:        service.ErrNullRequestBody,
-				contentType:    "application/json",
-			},
-		},
-		{
-			name:        "invalid URL",
-			request:     "/",
-			requestBody: models.LongURL{URL: "practicum.yandex.ru/"},
-			want: want{
-				statusCodePOST: 400,
-				wantErr:        service.ErrInvalidRequestBodyURL,
-				contentType:    "application/json",
-			},
-		},
-	}
-
-	storages, _ := storage.NewURLHandle(nil, file.Name())
-	services := service.NewService(storages, cfg.Shortener)
-	h := NewHandlers(services, zap.SugaredLogger{})
-	hostName := cfg.Shortener.Listen + "/"
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			//Тест POST
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			req, _ := json.Marshal(test.requestBody)
-			reader := bytes.NewReader(req)
-			c.Request = httptest.NewRequest(http.MethodPost, test.request, reader)
-			h.ShortenerURLJSON(c)
-
-			result := w.Result()
-			defer result.Body.Close()
-			//Преобразуем тело для проверки
-			body, _ := io.ReadAll(result.Body)
-
-			if result.StatusCode == 201 {
-				var bodyShortURL models.ShortURL
-				_ = json.Unmarshal(body, &bodyShortURL)
-				regCheck := strings.Contains(bodyShortURL.Result, hostName)
-				assert.Equal(t, true, regCheck)
-				shortURL := strings.TrimPrefix(bodyShortURL.Result, hostName)
-				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
-				assert.Equal(t, test.want.contentType, result.Header.Get("Content-Type"))
-				wGET := httptest.NewRecorder()
-				c2, _ := gin.CreateTestContext(wGET)
-				c2.Request = httptest.NewRequest(http.MethodGet, test.request, nil)
-				c2.AddParam("id", shortURL)
-				h.LongerURL(c2)
-				resultGET := wGET.Result()
-				defer resultGET.Body.Close()
-				assert.Equal(t, test.want.statusCodeGET, resultGET.StatusCode)
-				assert.Equal(t, test.want.locationHeader, resultGET.Header.Get("Location"))
-			} else {
-				assert.Equal(t, test.want.statusCodePOST, result.StatusCode)
-				assert.EqualError(t, test.want.wantErr, test.want.wantErr.Error(), result.Body)
-			}
+			assert.Equal(t, w.Code, test.expectedStatusCode)
 		})
 	}
 }

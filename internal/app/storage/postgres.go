@@ -2,14 +2,13 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/koteyye/shortener/internal/app/models"
 	"go.uber.org/zap"
 	"time"
-)
-
-const (
-	PqDuplicateErr = "23505"
 )
 
 type DBStorage struct {
@@ -34,47 +33,55 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	_, err = db.ExecContext(ctx, `create table if not exists shorturl (
     id serial not null primary key ,
     shortURL varchar(256) not null,
-    originalURL varchar not null unique
+    originalURL varchar not null unique,
+    user_created uuid not null
 )`)
 	if err != nil {
 		logger.Fatal(err.Error(), "event", "create table and index")
 	}
 }
 
-func (d *DBStorage) CreateTable() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	_, err := d.db.ExecContext(ctx, `create table testshorturl 
-(id serial not null primary key ,
- shortURL varchar(256) not null,
-  originalURL varchar not null);`)
+func (d *DBStorage) GetURLByUser(ctx context.Context, userId string) ([]*models.AllURLs, error) {
+	var result []*models.AllURLs
+	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userId)
 	if err != nil {
-		return fmt.Errorf("can't build sql request create table: %v", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNotFound
+		}
+		return nil, fmt.Errorf("не удалось получить сокращенный url из бд: %v", err)
 	}
-	return nil
+	return result, nil
 }
 
-func (d *DBStorage) AddURL(ctx context.Context, s string, s2 string) error {
-	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl) values ($1, $2)", s, s2)
+func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL string) error {
+	userId := ctx.Value("userId")
+	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values ($1, $2, $3)", shortURL, originalURL, userId)
 	if err != nil {
 		return fmt.Errorf("can't add URL to DB: %w", err)
 	}
 	return nil
 }
 
-func (d *DBStorage) GetURL(ctx context.Context, s string) (string, error) {
+func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (string, error) {
 	var result string
-	if err := d.db.GetContext(ctx, &result, "select originalurl from shorturl where shorturl = $1", s); err != nil {
-		return "", fmt.Errorf("can't select longURL: %w", err)
+	err := d.db.GetContext(ctx, &result, "select originalurl from shorturl where shorturl = $1", shortURL)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", models.ErrNotFound
+		}
+		return "", fmt.Errorf("не удалось получить сокращенный url из бд: %w", err)
 	}
 	return result, nil
 }
 
-func (d *DBStorage) GetShortURL(ctx context.Context, s string) (string, error) {
+func (d *DBStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
 	var result string
-	if err := d.db.GetContext(ctx, &result, "select shorturl from shorturl where originalurl = $1", s); err != nil {
-		return "", fmt.Errorf("can't select shortURL: %w", err)
+	err := d.db.GetContext(ctx, &result, "select shorturl from shorturl where originalurl = $1", originalURL)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", models.ErrNotFound
+		}
+		return "", fmt.Errorf("не удалось получить сокращенный url из бд: %w", err)
 	}
 	return result, nil
 }

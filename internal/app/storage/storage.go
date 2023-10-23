@@ -2,45 +2,40 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/koteyye/shortener/internal/app/models"
 	"go.uber.org/zap"
 )
 
-var ErrNotFound = errors.New("не найдено такого значения")
+//go:generate mockgen -source=storage.go -destination=mocks/mock.go
 
 type URLStorage interface {
 	AddURL(context.Context, string, string) error
 	GetURL(context.Context, string) (string, error)
 	Ping(ctx context.Context) error
 	GetShortURL(context.Context, string) (string, error)
+	GetURLByUser(context.Context, string) ([]*models.AllURLs, error)
 }
 
 type URLHandler struct {
 	URLStorage
 }
 
-func NewURLHandle(db *sqlx.DB, filePath string) (*URLHandler, error) {
-	newLogger, err := zap.NewDevelopment()
-	if err != nil {
-		return nil, err
-	}
-	defer newLogger.Sync()
-
-	logger := *newLogger.Sugar()
+func NewURLHandle(ctx context.Context, db *sqlx.DB, filePath string) (*URLHandler, error) {
+	log := ctx.Value("logger").(zap.SugaredLogger)
 	if db != nil {
-		logger.Info("start storage in db")
+		log.Info("start storage in db")
 		return &URLHandler{
 			URLStorage: NewPostgres(db),
 		}, nil
 	} else if filePath != "" {
-		logger.Info(fmt.Sprintf("start storage in file: %v", filePath))
+		log.Info(fmt.Sprintf("start storage in file: %v", filePath))
 		return &URLHandler{
 			URLStorage: NewFileStorage(filePath),
 		}, nil
 	}
-	logger.Info("start storage in moc")
+	log.Info("start storage in moc")
 	return &URLHandler{
 		URLStorage: NewURLMap(),
 	}, nil
