@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/models"
@@ -13,7 +12,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 // Тестовый конфиг
@@ -68,12 +66,17 @@ func TestHandlers_Batch(t *testing.T) {
 
 			r := httptest.NewRequest(http.MethodPost, "/batch", test.inputBody)
 			w := httptest.NewRecorder()
-			ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-			defer cancel()
 
 			repo := mock_service.NewMockShortener(c)
 
-			gomock.InOrder(repo.EXPECT().Batch(ctx, test.inputOriginURLList).Return(nil, nil))
+			fake := []*models.URLList{
+				{
+					ID:       "325325325",
+					ShortURL: "http://localhost:8080/piorjgpojerwpgpwe",
+				},
+			}
+
+			gomock.InOrder(repo.EXPECT().Batch(gomock.Any(), gomock.Eq(test.inputOriginURLList)).Return(fake, nil))
 
 			services := service.Service{Shortener: repo}
 			handler := Handlers{services: &services}

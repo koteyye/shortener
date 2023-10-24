@@ -37,7 +37,7 @@ func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 				r.Post("/batch", h.Batch)
 			})
 			r.Route("/user/urls", func(r chi.Router) {
-				r.Get("/", h.GetUserURLs)
+				r.Get("/", h.GetURLsByUser)
 			})
 		})
 	})

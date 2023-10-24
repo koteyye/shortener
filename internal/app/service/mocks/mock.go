@@ -95,6 +95,21 @@ func (mr *MockShortenerMockRecorder) GetShortURLFromOriginal(ctx, originalURL in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetShortURLFromOriginal", reflect.TypeOf((*MockShortener)(nil).GetShortURLFromOriginal), ctx, originalURL)
 }
 
+// GetURLByUser mocks base method.
+func (m *MockShortener) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetURLByUser", ctx, userID)
+	ret0, _ := ret[0].([]*models.AllURLs)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetURLByUser indicates an expected call of GetURLByUser.
+func (mr *MockShortenerMockRecorder) GetURLByUser(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByUser", reflect.TypeOf((*MockShortener)(nil).GetURLByUser), ctx, userID)
+}
+
 // PingDB mocks base method.
 func (m *MockShortener) PingDB(ctx context.Context) error {
 	m.ctrl.T.Helper()

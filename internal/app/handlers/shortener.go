@@ -132,7 +132,7 @@ func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h Handlers) GetUserURLs(res http.ResponseWriter, r *http.Request) {
+func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	r.WithContext(ctx)
