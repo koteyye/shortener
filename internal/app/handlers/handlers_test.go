@@ -211,7 +211,7 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			userID := uuid.New()
-			ctx := context.WithValue(r.Context(), "userId", userID.String())
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
 			repo := mock_service.NewMockShortener(c)
 			if test.mockBehavior != nil {

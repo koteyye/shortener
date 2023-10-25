@@ -135,6 +135,9 @@ func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 		mapErrorToJSONResponse(res, http.StatusBadRequest, err.Error())
 		return
 	}
+	if allURLs == nil {
+		mapErrorToJSONResponse(res, http.StatusNoContent, "у данного пользователя нет сокращенных url")
+	}
 	mapAllURLsToJSONResponse(res, http.StatusOK, allURLs)
 	return
 }
