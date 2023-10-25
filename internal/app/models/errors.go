@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	PqDuplicateErr = "23505"
-	PqRow
+	PqDuplicateErr  = "23505"
+	JWTExpiredToken = 16
 )
 
 var (
@@ -17,6 +17,7 @@ var (
 	ErrDuplicate             = errors.New("в бд уже есть сокращенный url")
 	ErrDB                    = errors.New("непредвиденная ошибка в бд")
 	ErrInvalidToken          = errors.New("невалидный токен")
+	ErrExpiredToken          = errors.New("токен просрочен")
 	ErrMockNotSupported      = errors.New("не поддерживается в моках")
 	ErrFileNotSupported      = errors.New("не поддерживается в файле")
 )

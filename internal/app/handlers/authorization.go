@@ -47,7 +47,9 @@ func (h Handlers) Authorization(next http.Handler) http.Handler {
 		}
 		userId, err := h.getUserID(cookie.Value)
 		if err != nil {
-			if errors.Is(err, models.ErrInvalidToken) {
+			var jwtErr *jwt.ValidationError
+			errors.As(err, &jwtErr)
+			if errors.Is(err, models.ErrInvalidToken) || jwtErr.Errors == models.JWTExpiredToken {
 				newToken, err := h.buildJWTString()
 				if err != nil {
 					mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
@@ -63,9 +65,9 @@ func (h Handlers) Authorization(next http.Handler) http.Handler {
 				return
 			}
 			mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возника ошибка при получении пользователя по токену: %v", err).Error())
+			return
 		}
 		ctx := context.WithValue(r.Context(), userIdKey, userId)
-		r.WithContext(ctx)
 		next.ServeHTTP(res, r.WithContext(ctx))
 	})
 }

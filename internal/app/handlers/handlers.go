@@ -26,7 +26,6 @@ func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 	r.Route(baseURL, func(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(h.Authorization)
-			r.Use(h.mapParamsGetOriginalURL)
 			r.Get("/", h.GetOriginalURL)
 		})
 		r.Get("/:id", h.GetOriginalURL)

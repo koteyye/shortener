@@ -11,17 +11,6 @@ import (
 	"github.com/koteyye/shortener/internal/app/models"
 )
 
-func (h Handlers) mapParamsGetOriginalURL(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			mapErrorToResponse(res, r, http.StatusBadRequest, "не указан сокращенный url")
-		}
-		ctx := context.WithValue(r.Context(), "id", id)
-		next.ServeHTTP(res, r.WithContext(ctx))
-	})
-}
-
 func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -94,7 +83,7 @@ func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	id := r.Context().Value("id").(string)
+	id := chi.URLParam(r, "id")
 	originalURL, err := h.services.GetOriginURL(ctx, id)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())

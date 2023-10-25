@@ -46,7 +46,7 @@ func (d *DBStorage) GetURLByUser(ctx context.Context, userId string) ([]*models.
 	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, models.ErrNotFound
+			return nil, err
 		}
 		return nil, fmt.Errorf("не удалось получить сокращенный url из бд: %v", err)
 	}
