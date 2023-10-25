@@ -271,8 +271,8 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 			r := httptest.NewRequest(http.MethodGet, "/api/shorten", test.inputBody)
 			w := httptest.NewRecorder()
 
-			userId := uuid.New()
-			ctx := context.WithValue(r.Context(), "userId", userId.String())
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), "userId", userID.String())
 
 			repo := mock_service.NewMockShortener(c)
 			if test.mockBehavior != nil {
@@ -334,8 +334,8 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			r := httptest.NewRequest(http.MethodPost, "/", test.inputBody)
 			w := httptest.NewRecorder()
 
-			userId := uuid.New()
-			ctx := context.WithValue(r.Context(), userIDKey, userId.String())
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
 			repo := mock_service.NewMockShortener(c)
 			if test.mockBehavior != nil {

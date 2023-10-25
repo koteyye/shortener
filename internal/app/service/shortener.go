@@ -78,6 +78,13 @@ func (s ShortenerService) GetShortURLFromOriginal(ctx context.Context, urlVal st
 
 func (s ShortenerService) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
 	allURLs, err := s.storage.GetURLByUser(ctx, userID)
+	for _, urlItem := range allURLs {
+		finalURL, err := url.JoinPath(s.shortener.Listen, "/", urlItem.ShortURL)
+		if err != nil {
+			return nil, err
+		}
+		urlItem.ShortURL = finalURL
+	}
 	return allURLs, err
 }
 
