@@ -38,37 +38,45 @@ func (h Handlers) Authorization(next http.Handler) http.Handler {
 					Value: newToken,
 					Path:  "/",
 				}
-				http.SetCookie(res, cookie)
-				mapErrorToResponse(res, r, http.StatusUnauthorized, "создан новый пользователь, необходимо повторить")
-				return
-			}
-			mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возника ошибка при получении cookie: %v", err).Error())
-			return
-		}
-		userId, err := h.getUserID(cookie.Value)
-		if err != nil {
-			var jwtErr *jwt.ValidationError
-			errors.As(err, &jwtErr)
-			if errors.Is(err, models.ErrInvalidToken) || jwtErr.Errors == models.JWTExpiredToken {
-				newToken, err := h.buildJWTString()
+				userId, err := h.getUserID(newToken)
 				if err != nil {
-					mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
+					mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("ошибка при получении userid из новой куки: %v", err).Error())
 					return
 				}
-				cookie := &http.Cookie{
-					Name:  "authorization",
-					Value: newToken,
-					Path:  "/",
-				}
 				http.SetCookie(res, cookie)
-				mapErrorToResponse(res, r, http.StatusUnauthorized, fmt.Errorf("выпущен новый токен, текущий: %v", err).Error())
+				ctx := context.WithValue(r.Context(), userIdKey, userId)
+				next.ServeHTTP(res, r.WithContext(ctx))
+			} else {
+				mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возника ошибка при получении cookie: %v", err).Error())
 				return
 			}
-			mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возника ошибка при получении пользователя по токену: %v", err).Error())
-			return
+
+		} else {
+			userId, err := h.getUserID(cookie.Value)
+			if err != nil {
+				var jwtErr *jwt.ValidationError
+				errors.As(err, &jwtErr)
+				if errors.Is(err, models.ErrInvalidToken) || jwtErr.Errors == models.JWTExpiredToken {
+					newToken, err := h.buildJWTString()
+					if err != nil {
+						mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
+						return
+					}
+					cookie := &http.Cookie{
+						Name:  "authorization",
+						Value: newToken,
+						Path:  "/",
+					}
+					http.SetCookie(res, cookie)
+					mapErrorToResponse(res, r, http.StatusUnauthorized, fmt.Errorf("выпущен новый токен, текущий: %v", err).Error())
+					return
+				}
+				mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возника ошибка при получении пользователя по токену: %v", err).Error())
+				return
+			}
+			ctx := context.WithValue(r.Context(), userIdKey, userId)
+			next.ServeHTTP(res, r.WithContext(ctx))
 		}
-		ctx := context.WithValue(r.Context(), userIdKey, userId)
-		next.ServeHTTP(res, r.WithContext(ctx))
 	})
 }
 
