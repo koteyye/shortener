@@ -25,8 +25,8 @@ func mapShortURLToJSONResponse(w http.ResponseWriter, statusCode int, result str
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
 	}
-	w.WriteHeader(statusCode)
 	w.Header().Add("Content-type", ctApplicationJSON)
+	w.WriteHeader(statusCode)
 	w.Write(rawResponse)
 }
 
@@ -62,8 +62,8 @@ func mapURLListToJSONResponse(w http.ResponseWriter, statusCode int, result []*m
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
 	}
-	w.WriteHeader(statusCode)
 	w.Header().Add("Content-type", ctApplicationJSON)
+	w.WriteHeader(statusCode)
 	w.Write(rawResponse)
 }
 
@@ -72,7 +72,7 @@ func mapAllURLsToJSONResponse(w http.ResponseWriter, statusCode int, result []*m
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
 	}
-	w.WriteHeader(statusCode)
 	w.Header().Add("Content-type", ctApplicationJSON)
+	w.WriteHeader(statusCode)
 	w.Write(rawResponse)
 }

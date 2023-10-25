@@ -126,7 +126,7 @@ func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	r.WithContext(ctx)
 
-	allURLs, err := h.services.GetURLByUser(r.Context(), r.Context().Value(userIdKey).(string))
+	allURLs, err := h.services.GetURLByUser(r.Context(), r.Context().Value(userIDKey).(string))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			mapErrorToJSONResponse(res, http.StatusNoContent, err.Error())

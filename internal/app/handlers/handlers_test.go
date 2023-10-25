@@ -173,7 +173,7 @@ func TestHandlers_Batch(t *testing.T) {
 }
 
 func TestHandlers_GetURLsByUser(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockShortener, userId string)
+	type mockBehavior func(r *mock_service.MockShortener, userID string)
 	tests := []struct {
 		name                 string
 		mockBehavior         mockBehavior
@@ -182,8 +182,8 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 	}{
 		{
 			name: "success",
-			mockBehavior: func(r *mock_service.MockShortener, userId string) {
-				r.EXPECT().GetURLByUser(gomock.Any(), userId).Return([]*models.AllURLs{
+			mockBehavior: func(r *mock_service.MockShortener, userID string) {
+				r.EXPECT().GetURLByUser(gomock.Any(), userID).Return([]*models.AllURLs{
 					{
 						ShortURL:    "http://localhost:8080/iwvwpvwepofpwoe",
 						OriginalURL: "http://yandex.ru",
@@ -195,8 +195,8 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 		},
 		{
 			name: "no content",
-			mockBehavior: func(r *mock_service.MockShortener, userId string) {
-				r.EXPECT().GetURLByUser(gomock.Any(), userId).Return(nil, sql.ErrNoRows)
+			mockBehavior: func(r *mock_service.MockShortener, userID string) {
+				r.EXPECT().GetURLByUser(gomock.Any(), userID).Return(nil, sql.ErrNoRows)
 			},
 			expectedStatusCode: 204,
 		},
@@ -210,12 +210,12 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 			r := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 			w := httptest.NewRecorder()
 
-			userId := uuid.New()
-			ctx := context.WithValue(r.Context(), "userId", userId.String())
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), "userId", userID.String())
 
 			repo := mock_service.NewMockShortener(c)
 			if test.mockBehavior != nil {
-				test.mockBehavior(repo, userId.String())
+				test.mockBehavior(repo, userID.String())
 			}
 
 			services := service.Service{Shortener: repo}
@@ -335,7 +335,7 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			userId := uuid.New()
-			ctx := context.WithValue(r.Context(), "userId", userId.String())
+			ctx := context.WithValue(r.Context(), userIDKey, userId.String())
 
 			repo := mock_service.NewMockShortener(c)
 			if test.mockBehavior != nil {

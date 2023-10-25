@@ -54,8 +54,8 @@ func (d *DBStorage) GetURLByUser(ctx context.Context, userId string) ([]*models.
 }
 
 func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL string) error {
-	userId := ctx.Value("userId")
-	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values ($1, $2, $3)", shortURL, originalURL, userId)
+	userID := ctx.Value("userId")
+	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values ($1, $2, $3)", shortURL, originalURL, userID)
 	if err != nil {
 		return fmt.Errorf("can't add URL to DB: %w", err)
 	}
