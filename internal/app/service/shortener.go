@@ -20,10 +20,10 @@ func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener
 	return &ShortenerService{storage: storage, shortener: shortener}
 }
 
-func (s ShortenerService) Batch(ctx context.Context, originalList []*models.OriginURLList) ([]*models.URLList, error) {
+func (s ShortenerService) Batch(ctx context.Context, originalList []*models.OriginURLList, userID string) ([]*models.URLList, error) {
 	var urllist []*models.URLList
 	for _, origin := range originalList {
-		short, err := s.AddShortURL(ctx, origin.OriginURL)
+		short, err := s.AddShortURL(ctx, origin.OriginURL, userID)
 		if err != nil {
 			if models.MapConflict(err) {
 				shortURL, err := s.GetShortURLFromOriginal(ctx, origin.OriginURL)
@@ -52,9 +52,9 @@ func (s ShortenerService) GetOriginURL(ctx context.Context, shortURL string) (st
 	return res, nil
 }
 
-func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string) (string, error) {
+func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string, userID string) (string, error) {
 	res := generateUnitKey()
-	if err := s.storage.AddURL(ctx, res, urlVal); err != nil {
+	if err := s.storage.AddURL(ctx, res, urlVal, userID); err != nil {
 		return "", fmt.Errorf("add url: %w", err)
 	}
 	urlRes, err := url.JoinPath(s.shortener.Listen, "/", res)

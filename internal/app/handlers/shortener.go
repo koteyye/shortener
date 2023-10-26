@@ -14,14 +14,14 @@ import (
 func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-
+	userId := ctx.Value(userIDKey).(string)
 	strReqBody, err := mapRequestShortenURL(r)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, "не удалось прочитать запрос")
 		return
 	}
 
-	result, err := h.services.AddShortURL(ctx, strReqBody)
+	result, err := h.services.AddShortURL(ctx, strReqBody, userId)
 	if err != nil {
 		if models.MapConflict(err) {
 			result, err = h.services.GetShortURLFromOriginal(r.Context(), strReqBody)
@@ -43,14 +43,14 @@ func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-
+	userId := ctx.Value(userIDKey).(string)
 	input, err := mapRequestBatch(r)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	list, err := h.services.Batch(ctx, input)
+	list, err := h.services.Batch(ctx, input, userId)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
@@ -90,15 +90,15 @@ func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-
+	userId := ctx.Value(userIDKey).(string)
 	input, err := mapRequestJSONShortenURL(r)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
 	}
-	result, err := h.services.AddShortURL(r.Context(), input.URL)
+	result, err := h.services.AddShortURL(r.Context(), input.URL, userId)
 	if err != nil {
 		if models.MapConflict(err) {
 			result, err := h.services.GetShortURLFromOriginal(ctx, input.URL)

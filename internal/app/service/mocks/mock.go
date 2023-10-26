@@ -36,33 +36,33 @@ func (m *MockShortener) EXPECT() *MockShortenerMockRecorder {
 }
 
 // AddShortURL mocks base method.
-func (m *MockShortener) AddShortURL(ctx context.Context, url string) (string, error) {
+func (m *MockShortener) AddShortURL(ctx context.Context, url, userID string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddShortURL", ctx, url)
+	ret := m.ctrl.Call(m, "AddShortURL", ctx, url, userID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddShortURL indicates an expected call of AddShortURL.
-func (mr *MockShortenerMockRecorder) AddShortURL(ctx, url interface{}) *gomock.Call {
+func (mr *MockShortenerMockRecorder) AddShortURL(ctx, url, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockShortener)(nil).AddShortURL), ctx, url)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockShortener)(nil).AddShortURL), ctx, url, userID)
 }
 
 // Batch mocks base method.
-func (m *MockShortener) Batch(ctx context.Context, originalList []*models.OriginURLList) ([]*models.URLList, error) {
+func (m *MockShortener) Batch(ctx context.Context, originalList []*models.OriginURLList, userID string) ([]*models.URLList, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Batch", ctx, originalList)
+	ret := m.ctrl.Call(m, "Batch", ctx, originalList, userID)
 	ret0, _ := ret[0].([]*models.URLList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Batch indicates an expected call of Batch.
-func (mr *MockShortenerMockRecorder) Batch(ctx, originalList interface{}) *gomock.Call {
+func (mr *MockShortenerMockRecorder) Batch(ctx, originalList, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Batch", reflect.TypeOf((*MockShortener)(nil).Batch), ctx, originalList)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Batch", reflect.TypeOf((*MockShortener)(nil).Batch), ctx, originalList, userID)
 }
 
 // GetOriginURL mocks base method.

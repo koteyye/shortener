@@ -17,9 +17,9 @@ type Claims struct {
 	UserID string
 }
 
-type ctxUserKEy string
+type ctxUserKey string
 
-const userIDKey = ctxUserKEy("userId")
+const userIDKey ctxUserKey = "user_id"
 
 const (
 	TokenExp = time.Hour * 12

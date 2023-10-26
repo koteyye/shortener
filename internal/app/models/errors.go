@@ -39,8 +39,5 @@ func MapBatchConflict(list []*URLList) bool {
 			msgCount += 1
 		}
 	}
-	if msgCount == len(list) {
-		return false
-	}
-	return true
+	return msgCount != len(list)
 }

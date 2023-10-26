@@ -22,7 +22,7 @@ func NewFileStorage(filepath string) *FileStorage {
 	}
 }
 
-func (f *FileStorage) GetURLByUser(_ context.Context, s string) ([]*models.AllURLs, error) {
+func (f *FileStorage) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
 	return nil, models.ErrFileNotSupported
 }
 
@@ -34,7 +34,7 @@ func (f *FileStorage) Ping(_ context.Context) error {
 	return models.ErrFileNotSupported
 }
 
-func (f *FileStorage) AddURL(_ context.Context, s string, k string) error {
+func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) error {
 	var id int
 
 	reader, err := f.fileReader.NewReader()

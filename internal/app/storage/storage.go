@@ -11,7 +11,7 @@ import (
 //go:generate mockgen -source=storage.go -destination=mocks/mock.go
 
 type URLStorage interface {
-	AddURL(context.Context, string, string) error
+	AddURL(context.Context, string, string, string) error
 	GetURL(context.Context, string) (string, error)
 	Ping(ctx context.Context) error
 	GetShortURL(context.Context, string) (string, error)

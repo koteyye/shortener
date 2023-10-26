@@ -18,7 +18,7 @@ import (
 )
 
 func TestHandlers_Batch(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockShortener, urlList []*models.OriginURLList)
+	type mockBehavior func(r *mock_service.MockShortener, urlList []*models.OriginURLList, userID string)
 	tests := []struct {
 		name                 string
 		inputBody            io.Reader
@@ -49,8 +49,8 @@ func TestHandlers_Batch(t *testing.T) {
 					OriginURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
 				},
 			},
-			mockBehavior: func(r *mock_service.MockShortener, urlList []*models.OriginURLList) {
-				r.EXPECT().Batch(gomock.Any(), urlList).Return([]*models.URLList{
+			mockBehavior: func(r *mock_service.MockShortener, urlList []*models.OriginURLList, userID string) {
+				r.EXPECT().Batch(gomock.Any(), urlList, userID).Return([]*models.URLList{
 					{
 						ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
 						ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
@@ -95,8 +95,8 @@ func TestHandlers_Batch(t *testing.T) {
 					OriginURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
 				},
 			},
-			mockBehavior: func(r *mock_service.MockShortener, urlList []*models.OriginURLList) {
-				r.EXPECT().Batch(gomock.Any(), urlList).Return([]*models.URLList{
+			mockBehavior: func(r *mock_service.MockShortener, urlList []*models.OriginURLList, userID string) {
+				r.EXPECT().Batch(gomock.Any(), urlList, userID).Return([]*models.URLList{
 					{
 						ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
 						ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
@@ -149,16 +149,19 @@ func TestHandlers_Batch(t *testing.T) {
 
 			r := httptest.NewRequest(http.MethodPost, "/batch", test.inputBody)
 			r.Header.Set("Content-Type", ctApplicationJSON)
+			userID := uuid.NewString()
+			ctx := context.WithValue(r.Context(), userIDKey, userID)
+
 			w := httptest.NewRecorder()
 
 			repo := mock_service.NewMockShortener(c)
 			if test.mockBehavior != nil {
-				test.mockBehavior(repo, test.inputOriginURLList)
+				test.mockBehavior(repo, test.inputOriginURLList, userID)
 			}
 
 			services := service.Service{Shortener: repo}
 			handler := Handlers{services: &services}
-			handler.Batch(w, r)
+			handler.Batch(w, r.WithContext(ctx))
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -246,7 +249,7 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 			inputBody: strings.NewReader(`{"url": "http://yandex.ru"}`),
 			inputURL:  "http://yandex.ru",
 			mockBehavior: func(r *mock_service.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url).Return("http://localhost:8080/3g2gf2f2", nil)
+				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("http://localhost:8080/3g2gf2f2", nil)
 			},
 			expectedStatusCode:   201,
 			expectedResponseBody: `{"result": "http://localhost:8080/3g2gf2f2"}`,
@@ -256,7 +259,7 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 			inputBody: strings.NewReader(`{"url": "http://yandex.ru"}`),
 			inputURL:  "http://yandex.ru",
 			mockBehavior: func(r *mock_service.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url).Return("", &pq.Error{Code: models.PqDuplicateErr})
+				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("", &pq.Error{Code: models.PqDuplicateErr})
 			},
 			expectedStatusCode:   409,
 			expectedResponseBody: `{"result": "http://localhost:8080/3g2gf2f2"}`,
@@ -310,7 +313,7 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			inputBody: strings.NewReader(`http://yandex.ru`),
 			inputURL:  "http://yandex.ru",
 			mockBehavior: func(r *mock_service.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url).Return("http://localhost:8080/3g2gf2f2", nil)
+				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("http://localhost:8080/3g2gf2f2", nil)
 			},
 			expectedStatusCode:   201,
 			expectedResponseBody: `http://localhost:8080/3g2gf2f2`,
@@ -320,7 +323,7 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			inputBody: strings.NewReader(`http://yandex.ru`),
 			inputURL:  "http://yandex.ru",
 			mockBehavior: func(r *mock_service.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url).Return("", &pq.Error{Code: models.PqDuplicateErr})
+				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("", &pq.Error{Code: models.PqDuplicateErr})
 			},
 			expectedStatusCode:   409,
 			expectedResponseBody: `http://localhost:8080/3g2gf2f2`,

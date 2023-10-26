@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-type ctxUserKEy string
+type ctxUserKey string
 
-const userIDKey = ctxUserKEy("userId")
+const userIDKey ctxUserKey = "user_id"
 
 type DBStorage struct {
 	db *sqlx.DB
@@ -45,9 +45,9 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	}
 }
 
-func (d *DBStorage) GetURLByUser(ctx context.Context, userId string) ([]*models.AllURLs, error) {
+func (d *DBStorage) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
 	var result []*models.AllURLs
-	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userId)
+	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -57,8 +57,7 @@ func (d *DBStorage) GetURLByUser(ctx context.Context, userId string) ([]*models.
 	return result, nil
 }
 
-func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL string) error {
-	userID := ctx.Value(userIDKey)
+func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL string, userID string) error {
 	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values ($1, $2, $3)", shortURL, originalURL, userID)
 	if err != nil {
 		return fmt.Errorf("can't add URL to DB: %w", err)

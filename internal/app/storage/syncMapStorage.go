@@ -14,7 +14,7 @@ func NewURLMap() *URLMap {
 	return &URLMap{storage: sync.Map{}}
 }
 
-func (u *URLMap) GetURLByUser(ctx context.Context, s string) ([]*models.AllURLs, error) {
+func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
 	return nil, models.ErrMockNotSupported
 }
 
@@ -26,7 +26,7 @@ func (u *URLMap) GetShortURL(_ context.Context, _ string) (string, error) {
 	return "", models.ErrMockNotSupported
 }
 
-func (u *URLMap) AddURL(_ context.Context, k, s string) error {
+func (u *URLMap) AddURL(_ context.Context, k, s string, _ string) error {
 	u.storage.Store(k, s)
 	return nil
 }
