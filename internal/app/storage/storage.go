@@ -22,8 +22,7 @@ type URLHandler struct {
 	URLStorage
 }
 
-func NewURLHandle(ctx context.Context, db *sqlx.DB, filePath string) (*URLHandler, error) {
-	log := ctx.Value("logger").(zap.SugaredLogger)
+func NewURLHandle(log *zap.SugaredLogger, db *sqlx.DB, filePath string) (*URLHandler, error) {
 	if db != nil {
 		log.Info("start storage in db")
 		return &URLHandler{

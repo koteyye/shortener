@@ -14,14 +14,14 @@ import (
 func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	userId := ctx.Value(userIDKey).(string)
+	userID := ctx.Value(userIDKey).(string)
 	strReqBody, err := mapRequestShortenURL(r)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, "не удалось прочитать запрос")
 		return
 	}
 
-	result, err := h.services.AddShortURL(ctx, strReqBody, userId)
+	result, err := h.services.AddShortURL(ctx, strReqBody, userID)
 	if err != nil {
 		if models.MapConflict(err) {
 			result, err = h.services.GetShortURLFromOriginal(r.Context(), strReqBody)
@@ -43,14 +43,14 @@ func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	userId := ctx.Value(userIDKey).(string)
+	userID := ctx.Value(userIDKey).(string)
 	input, err := mapRequestBatch(r)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	list, err := h.services.Batch(ctx, input, userId)
+	list, err := h.services.Batch(ctx, input, userID)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
@@ -92,13 +92,13 @@ func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	userId := ctx.Value(userIDKey).(string)
+	userID := ctx.Value(userIDKey).(string)
 	input, err := mapRequestJSONShortenURL(r)
 	if err != nil {
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
 	}
-	result, err := h.services.AddShortURL(r.Context(), input.URL, userId)
+	result, err := h.services.AddShortURL(r.Context(), input.URL, userID)
 	if err != nil {
 		if models.MapConflict(err) {
 			result, err := h.services.GetShortURLFromOriginal(ctx, input.URL)
@@ -119,8 +119,7 @@ func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	r.WithContext(ctx)
-	userID := r.Context().Value(userIDKey).(string)
+	userID := ctx.Value(userIDKey).(string)
 
 	allURLs, err := h.services.GetURLByUser(r.Context(), userID)
 	if err != nil {

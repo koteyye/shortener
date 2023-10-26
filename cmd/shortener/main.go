@@ -16,13 +16,14 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
 	defer logger.Sync()
-	ctx := context.WithValue(context.Background(), "logger", *logger.Sugar())
-	log := ctx.Value("logger").(zap.SugaredLogger)
+	log := *logger.Sugar()
 
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -44,7 +45,7 @@ func main() {
 	}
 
 	//init internal
-	storages, err := storage.NewURLHandle(ctx, db, cfg.FileStoragePath)
+	storages, err := storage.NewURLHandle(&log, db, cfg.FileStoragePath)
 	if err != nil {
 		log.Fatalw(err.Error(), "event", "init storage")
 	}
@@ -59,10 +60,8 @@ func main() {
 }
 
 func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
-	log := ctx.Value("logger").(zap.SugaredLogger)
 	db, err := sqlx.Open("postgres", cfg.DataBaseDSN)
 	if err != nil {
-		log.Errorw(err.Error(), "event", "sqlx open")
 		return nil, fmt.Errorf("can't create db: %w", err)
 	}
 
@@ -71,7 +70,6 @@ func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 
 	err = db.PingContext(dbCtx)
 	if err != nil {
-		log.Errorw(err.Error(), "event", "ping context")
 		return nil, fmt.Errorf("can't ping db: %w", err)
 	}
 
