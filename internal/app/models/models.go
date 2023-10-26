@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -39,7 +38,7 @@ func (o *OriginURLList) Validate() error {
 		return ErrInvalidRequestBodyURL
 	}
 	if !strings.Contains(o.OriginURL, "http") {
-		return errors.New(fmt.Sprintf("некорректно указан original_url с correlation_id: %s", o.ID))
+		return fmt.Errorf("некорректно указан original_url с correlation_id: %v", o.ID)
 	}
 	return nil
 }
