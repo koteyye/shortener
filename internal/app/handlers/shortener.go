@@ -38,7 +38,6 @@ func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	}
 
 	mapToStringResponse(res, http.StatusCreated, result)
-	return
 }
 
 func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
@@ -63,7 +62,6 @@ func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	}
 
 	mapURLListToJSONResponse(res, http.StatusCreated, list)
-	return
 }
 
 func (h Handlers) Ping(res http.ResponseWriter, r *http.Request) {
@@ -76,7 +74,6 @@ func (h Handlers) Ping(res http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res.WriteHeader(http.StatusOK)
-	return
 }
 
 func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
@@ -90,7 +87,6 @@ func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(res, r, originalURL, http.StatusTemporaryRedirect)
-	return
 }
 
 func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
@@ -118,15 +114,15 @@ func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mapShortURLToJSONResponse(res, http.StatusCreated, result)
-	return
 }
 
 func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	r.WithContext(ctx)
+	userID := r.Context().Value(userIDKey).(string)
 
-	allURLs, err := h.services.GetURLByUser(r.Context(), r.Context().Value(userIDKey).(string))
+	allURLs, err := h.services.GetURLByUser(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			mapErrorToJSONResponse(res, http.StatusNoContent, err.Error())
@@ -139,5 +135,4 @@ func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 		mapErrorToJSONResponse(res, http.StatusNoContent, "у данного пользователя нет сокращенных url")
 	}
 	mapAllURLsToJSONResponse(res, http.StatusOK, allURLs)
-	return
 }

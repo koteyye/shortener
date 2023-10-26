@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -36,13 +37,12 @@ func (r *LoggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode
 }
 
-func marshalJSON(s *log) []byte {
+func marshalJSON(s *log) ([]byte, error) {
 	m, err := json.Marshal(s)
 	if err != nil {
-
+		return nil, fmt.Errorf("не удалось сериализовать лог: %v", err)
 	}
-
-	return m
+	return m, nil
 }
 
 func (h Handlers) Logging(next http.Handler) http.Handler {
@@ -61,14 +61,18 @@ func (h Handlers) Logging(next http.Handler) http.Handler {
 		next.ServeHTTP(&lw, r)
 
 		duration := time.Since(start).Nanoseconds()
-
-		h.logger.Infow("HTTP Request", "event", string(marshalJSON(&log{
+		logItem, err := marshalJSON(&log{
 			URI:        r.RequestURI,
 			Method:     r.Method,
 			Duration:   duration,
 			StatusCode: responseData.status,
 			Size:       responseData.size,
-		})))
+		})
+		if err != nil {
+			mapErrorToResponse(res, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		h.logger.Infow("HTTP Request", "event", string(logItem))
 	}
 	return http.HandlerFunc(logFN)
 }

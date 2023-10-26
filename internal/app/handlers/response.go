@@ -44,7 +44,6 @@ func mapErrorToResponse(w http.ResponseWriter, r *http.Request, statusCode int, 
 	}
 	w.Header().Add("Content-Type", "ext/plain; charset=utf-8")
 	w.Write([]byte(msg))
-	return
 }
 
 func mapErrorToJSONResponse(w http.ResponseWriter, statusCode int, msg string) {
@@ -52,8 +51,8 @@ func mapErrorToJSONResponse(w http.ResponseWriter, statusCode int, msg string) {
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
 	}
-	w.WriteHeader(statusCode)
 	w.Header().Add("Content-type", ctApplicationJSON)
+	w.WriteHeader(statusCode)
 	w.Write(rawResponse)
 }
 

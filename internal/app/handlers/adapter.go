@@ -37,7 +37,7 @@ func mapRequestJSONShortenURL(r *http.Request) (*models.OriginalURL, error) {
 		return nil, fmt.Errorf("невозможно прочитать запрос: %v", err)
 	}
 	if err := json.Unmarshal(body, &input); err != nil {
-		return nil, fmt.Errorf("невозможно сериализировать запрос: %v", err)
+		return nil, fmt.Errorf("невозможно десериализировать запрос: %v", err)
 	}
 	err = input.Validate()
 	if err != nil {
@@ -53,7 +53,7 @@ func mapRequestBatch(r *http.Request) ([]*models.OriginURLList, error) {
 		return nil, fmt.Errorf("невозможно прочитать запрос: %v", err)
 	}
 	if err := json.Unmarshal(body, &input); err != nil {
-		return nil, fmt.Errorf("невозможно сериализировать запрос: %v", err)
+		return nil, fmt.Errorf("невозможно десериализировать запрос: %v", err)
 	}
 	for _, item := range input {
 		err := item.Validate()

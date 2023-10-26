@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+type ctxUserKEy string
+
+const userIDKey = ctxUserKEy("userId")
+
 type DBStorage struct {
 	db *sqlx.DB
 }
@@ -54,7 +58,7 @@ func (d *DBStorage) GetURLByUser(ctx context.Context, userId string) ([]*models.
 }
 
 func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL string) error {
-	userID := ctx.Value("userId")
+	userID := ctx.Value(userIDKey)
 	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values ($1, $2, $3)", shortURL, originalURL, userID)
 	if err != nil {
 		return fmt.Errorf("can't add URL to DB: %w", err)
