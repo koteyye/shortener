@@ -22,6 +22,10 @@ func NewFileStorage(filepath string) *FileStorage {
 	}
 }
 
+func (f *FileStorage) DeleteURLByUser(_ context.Context, _ chan string) error {
+	return models.ErrMockNotSupported
+}
+
 func (f *FileStorage) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
 	return nil, models.ErrFileNotSupported
 }
@@ -71,18 +75,18 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) er
 	return nil
 }
 
-func (f *FileStorage) GetURL(_ context.Context, k string) (string, error) {
+func (f *FileStorage) GetURL(_ context.Context, k string) (*models.URL, error) {
 	reader, err := f.fileReader.NewReader()
 	if err != nil {
-		return "", fmt.Errorf("err reader: %w", err)
+		return &models.URL{}, fmt.Errorf("err reader: %w", err)
 	}
 	defer reader.Close()
 
 	readFile, err := reader.FindOriginalURL(k)
 	if err != nil {
-		return "", fmt.Errorf("err read file: %w", err)
+		return &models.URL{}, fmt.Errorf("err read file: %w", err)
 	}
-	return readFile.OriginalURL, nil
+	return &models.URL{OriginalURL: readFile.OriginalURL}, nil
 }
 
 type FileWriter struct {

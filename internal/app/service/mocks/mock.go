@@ -65,6 +65,18 @@ func (mr *MockShortenerMockRecorder) Batch(ctx, originalList, userID interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Batch", reflect.TypeOf((*MockShortener)(nil).Batch), ctx, originalList, userID)
 }
 
+// DeleteURLByUser mocks base method.
+func (m *MockShortener) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeleteURLByUser", ctx, urls, userID)
+}
+
+// DeleteURLByUser indicates an expected call of DeleteURLByUser.
+func (mr *MockShortenerMockRecorder) DeleteURLByUser(ctx, urls, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLByUser", reflect.TypeOf((*MockShortener)(nil).DeleteURLByUser), ctx, urls, userID)
+}
+
 // GetOriginURL mocks base method.
 func (m *MockShortener) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
 	m.ctrl.T.Helper()

@@ -4,20 +4,23 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/url"
+	"time"
+
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/storage"
-	"net/url"
-	"time"
+	"go.uber.org/zap"
 )
 
 type ShortenerService struct {
 	storage   storage.URLStorage
 	shortener *config.Shortener
+	logger    *zap.SugaredLogger
 }
 
-func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener) *ShortenerService {
-	return &ShortenerService{storage: storage, shortener: shortener}
+func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener, logger *zap.SugaredLogger) *ShortenerService {
+	return &ShortenerService{storage: storage, shortener: shortener, logger: logger}
 }
 
 func (s ShortenerService) Batch(ctx context.Context, originalList []*models.OriginURLList, userID string) ([]*models.URLList, error) {
@@ -49,7 +52,10 @@ func (s ShortenerService) GetOriginURL(ctx context.Context, shortURL string) (st
 	if err != nil {
 		return "", err
 	}
-	return res, nil
+	if res.IsDeleted {
+		return "", models.ErrDeleted
+	}
+	return res.OriginalURL, nil
 }
 
 func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string, userID string) (string, error) {
@@ -86,6 +92,27 @@ func (s ShortenerService) GetURLByUser(ctx context.Context, userID string) ([]*m
 		urlItem.ShortURL = finalURL
 	}
 	return allURLs, err
+}
+
+func (s ShortenerService) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
+
+	doneCh := make(chan struct{})
+	inputCh := add(doneCh, urls)
+
+	urlListByUser, err := s.GetURLByUser(ctx, userID)
+	if err != nil {
+		s.logger.Infow(err.Error(), "event:", "get url by user")
+	}
+	validatedChanel := validateUser(doneCh, inputCh, urlListByUser)
+
+	//делаем 10 каналов
+	chanels := fanOut(doneCh, validatedChanel, urlListByUser)
+
+	//объединяем в 1 канал
+	urlCh := fanIn(doneCh, chanels...)
+
+	s.storage.DeleteURLByUser(ctx, urlCh)
+	return
 }
 
 func generateUnitKey() string {

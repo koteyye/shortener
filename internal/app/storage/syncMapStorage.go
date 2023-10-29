@@ -18,6 +18,10 @@ func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, e
 	return nil, models.ErrMockNotSupported
 }
 
+func (u *URLMap) DeleteURLByUser(_ context.Context, _ chan string) error {
+	return models.ErrMockNotSupported
+}
+
 func (u *URLMap) Ping(_ context.Context) error {
 	return models.ErrMockNotSupported
 }
@@ -31,12 +35,12 @@ func (u *URLMap) AddURL(_ context.Context, k, s string, _ string) error {
 	return nil
 }
 
-func (u *URLMap) GetURL(_ context.Context, k string) (string, error) {
+func (u *URLMap) GetURL(_ context.Context, k string) (*models.URL, error) {
 
 	url, ok := u.storage.Load(k)
 	if !ok {
-		return "", models.ErrNotFound
+		return &models.URL{}, models.ErrNotFound
 	}
-	return url.(string), nil
+	return &models.URL{OriginalURL: url.(string)}, nil
 
 }

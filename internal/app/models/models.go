@@ -30,6 +30,12 @@ type OriginURLList struct {
 	OriginURL string `json:"original_url"`
 }
 
+type URL struct {
+	ShortURL    string `db:"shorturl"`
+	OriginalURL string `db:"originalurl"`
+	IsDeleted   bool   `db:"is_deleted"`
+}
+
 func (o *OriginURLList) Validate() error {
 	if o.ID == "" {
 		return ErrNullRequestBody

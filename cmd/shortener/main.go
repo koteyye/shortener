@@ -49,8 +49,8 @@ func main() {
 	if err != nil {
 		log.Fatalw(err.Error(), "event", "init storage")
 	}
-	services := service.NewService(storages, cfg.Shortener)
-	handler := handlers.NewHandlers(services, log, cfg.JWTSecretKey)
+	services := service.NewService(storages, cfg.Shortener, &log)
+	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey)
 
 	restServer := new(server.Server)
 	if err := restServer.Run(cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {

@@ -20,6 +20,7 @@ var (
 	ErrExpiredToken          = errors.New("токен просрочен")
 	ErrMockNotSupported      = errors.New("не поддерживается в моках")
 	ErrFileNotSupported      = errors.New("не поддерживается в файле")
+	ErrDeleted               = errors.New("ссылка удалена")
 )
 
 func MapConflict(err error) bool {
