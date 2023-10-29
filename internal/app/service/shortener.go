@@ -112,7 +112,6 @@ func (s ShortenerService) DeleteURLByUser(ctx context.Context, urls []string, us
 	urlCh := fanIn(doneCh, chanels...)
 
 	s.storage.DeleteURLByUser(ctx, urlCh)
-	return
 }
 
 func generateUnitKey() string {
