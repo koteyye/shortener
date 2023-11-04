@@ -83,6 +83,10 @@ func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	originalURL, err := h.services.GetOriginURL(ctx, id)
 	if err != nil {
+		if errors.Is(err, models.ErrDeleted) {
+			res.WriteHeader(http.StatusGone)
+			return
+		}
 		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -134,4 +138,16 @@ func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 		mapErrorToJSONResponse(res, http.StatusNoContent, "у данного пользователя нет сокращенных url")
 	}
 	mapAllURLsToJSONResponse(res, http.StatusOK, allURLs)
+}
+
+func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	userID := ctx.Value(userIDKey).(string)
+
+	urls, _ := mapRequestDeleteByUser(r)
+
+	go h.services.Shortener.DeleteURLByUser(context.Background(), urls, userID)
+
+	res.WriteHeader(http.StatusAccepted)
 }

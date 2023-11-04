@@ -65,3 +65,15 @@ func mapRequestBatch(r *http.Request) ([]*models.OriginURLList, error) {
 	}
 	return input, nil
 }
+
+func mapRequestDeleteByUser(r *http.Request) ([]string, error) {
+	var urls []string
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("невозможно прочитать запрос: %v", err)
+	}
+	if err := json.Unmarshal(body, &urls); err != nil {
+		return nil, fmt.Errorf("невозможно десериализовать запрос: %v", err)
+	}
+	return urls, nil
+}

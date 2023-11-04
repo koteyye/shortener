@@ -8,11 +8,11 @@ import (
 
 type Handlers struct {
 	services  *service.Service
-	logger    zap.SugaredLogger
+	logger    *zap.SugaredLogger
 	secretKey string
 }
 
-func NewHandlers(services *service.Service, logger zap.SugaredLogger, secretKey string) *Handlers {
+func NewHandlers(services *service.Service, logger *zap.SugaredLogger, secretKey string) *Handlers {
 	return &Handlers{services: services, logger: logger, secretKey: secretKey}
 }
 
@@ -37,6 +37,7 @@ func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 			})
 			r.Route("/user/urls", func(r chi.Router) {
 				r.Get("/", h.GetURLsByUser)
+				r.Delete("/", h.DeleteURLsByUser)
 			})
 		})
 	})
