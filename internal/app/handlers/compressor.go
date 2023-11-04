@@ -3,51 +3,47 @@ package handlers
 import (
 	"compress/gzip"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slices"
 	"net/http"
 )
 
-func Compress() gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		//
-		contentEncoding := c.Request.Header.Get("Content-Encoding")
+func (h Handlers) Compress(next http.Handler) http.Handler {
+	compressFn := func(res http.ResponseWriter, r *http.Request) {
+		contentEncoding := r.Header.Get("Content-Encoding")
 		if contentEncoding == "gzip" {
-			gz, err := gzip.NewReader(c.Request.Body)
+			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
-				newJSONResponse(c, http.StatusBadRequest, err)
+				mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Sprintf("gzip newreader: %v", err))
 				return
 			}
 			defer gz.Close()
 
-			c.Request.Body = gz
+			r.Body = gz
 		}
 
-		acceptGzip := c.Request.Header.Values("Accept-Encoding")
+		acceptGzip := r.Header.Values("Accept-Encoding")
 		acceptContent := []string{"application/json", "text/html"}
-		isAcceptGzip := slices.Contains(acceptGzip, "gzip") && slices.Contains(acceptContent, c.Request.Header.Get("Content-Type"))
+		isAcceptGzip := slices.Contains(acceptGzip, "gzip") && slices.Contains(acceptContent, r.Header.Get("Content-Type"))
 		if isAcceptGzip {
-			gw := gzip.NewWriter(c.Writer)
-			gw.Reset(c.Writer)
-			c.Writer = &gzipWriter{
-				ResponseWriter: c.Writer,
+			gw := gzip.NewWriter(res)
+			gw.Reset(res)
+			res = &gzipWriter{
+				ResponseWriter: res,
 				writer:         gw,
 			}
-			c.Header("Content-Encoding", "gzip")
+			res.Header().Add("Content-Encoding", "gzip")
 			defer func() {
 				gw.Close()
-				c.Header("Content-Length", fmt.Sprint(c.Writer.Size()))
+				res.Header().Add("Content-Length", fmt.Sprint(res.Header().Get("size")))
 			}()
 		}
-
-		c.Next()
-
+		next.ServeHTTP(res, r)
 	}
+	return http.HandlerFunc(compressFn)
 }
 
 type gzipWriter struct {
-	gin.ResponseWriter
+	http.ResponseWriter
 	writer *gzip.Writer
 }
 

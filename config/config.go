@@ -10,13 +10,15 @@ const (
 	defaultServer          = "localhost:8080"
 	defaultShortenerHost   = "http://localhost:8080"
 	defaultFileStoragePath = "/tmp/short-url-db.json"
+	deafultSecretKey       = "jpoifjewf4093fgu902fj9023jf092jfc023f"
 )
 
 type Config struct {
 	Server          *Server
 	Shortener       *Shortener
 	FileStoragePath string
-	DataBaseDNS     string
+	DataBaseDSN     string
+	JWTSecretKey    string
 }
 
 type Server struct {
@@ -32,14 +34,16 @@ type ENVValue struct {
 	Server          string `env:"SERVER_ADDRESS"`
 	Shortener       string `env:"BASE_URL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	DataBaseDNS     string `env:"DATABASE_DNS"`
+	DataBaseDSN     string `env:"DATABASE_DSN"`
+	JWTSecretKey    string `env:"JWTSecretKey"`
 }
 
 type cliFlag struct {
+	flagJWT      string
 	flagAddress  string
 	flagShorten  string
 	flagFilePath string
-	flagDNS      string
+	flagDSN      string
 }
 
 func GetConfig() (*Config, error) {
@@ -47,7 +51,8 @@ func GetConfig() (*Config, error) {
 	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
 	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
 	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
-	flag.StringVar(&cliFlags.flagDNS, "d", "", "DNS")
+	flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
+	flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
 	flag.Parse()
 	fmt.Println(cliFlags)
 
@@ -69,7 +74,8 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
 		},
 		Shortener:       &Shortener{Listen: calcVal(envVal.Shortener, cliFlags.flagShorten, defaultShortenerHost)},
 		FileStoragePath: calcVal(envVal.FileStoragePath, cliFlags.flagFilePath, defaultFileStoragePath),
-		DataBaseDNS:     calcVal(envVal.DataBaseDNS, cliFlags.flagDNS, ""),
+		DataBaseDSN:     calcVal(envVal.DataBaseDSN, cliFlags.flagDSN, ""),
+		JWTSecretKey:    calcVal(envVal.JWTSecretKey, cliFlags.flagJWT, deafultSecretKey),
 	}
 
 }

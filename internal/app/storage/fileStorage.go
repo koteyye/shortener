@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/koteyye/shortener/internal/app/models"
 	"log"
@@ -23,15 +22,19 @@ func NewFileStorage(filepath string) *FileStorage {
 	}
 }
 
+func (f *FileStorage) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
+	return nil, models.ErrFileNotSupported
+}
+
 func (f *FileStorage) GetShortURL(_ context.Context, _ string) (string, error) {
-	return "", errors.New("не поддерживается в файле")
+	return "", models.ErrFileNotSupported
 }
 
 func (f *FileStorage) Ping(_ context.Context) error {
-	return errors.New("не поддерживается в файле")
+	return models.ErrFileNotSupported
 }
 
-func (f *FileStorage) AddURL(_ context.Context, s string, k string) error {
+func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) error {
 	var id int
 
 	reader, err := f.fileReader.NewReader()
@@ -57,7 +60,7 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string) error {
 	}
 	defer writer.Close()
 
-	err = writer.WriteShortURL(models.FileString{
+	err = writer.WriteShortURL(models.AllURLs{
 		ID:          id,
 		ShortURL:    s,
 		OriginalURL: k,
@@ -101,7 +104,7 @@ func (w *FileWriter) NewWriter() (*FileWriter, error) {
 	return &FileWriter{file: file, encoder: json.NewEncoder(file)}, err
 }
 
-func (w *FileWriter) WriteShortURL(value models.FileString) error {
+func (w *FileWriter) WriteShortURL(value models.AllURLs) error {
 	data, err := json.Marshal(&value)
 	if err != nil {
 		return err
@@ -124,8 +127,8 @@ func (r *FileReader) NewReader() (*FileReader, error) {
 	return &FileReader{file: file}, nil
 }
 
-func (r *FileReader) ReadShortURL() (*models.FileString, error) {
-	var fileString models.FileString
+func (r *FileReader) ReadShortURL() (*models.AllURLs, error) {
+	var fileString models.AllURLs
 
 	scanner := bufio.NewScanner(r.file)
 
@@ -143,8 +146,8 @@ func (r *FileReader) Close() error {
 	return r.file.Close()
 }
 
-func (r *FileReader) FindOriginalURL(shortURL string) (*models.FileString, error) {
-	var fileString models.FileString
+func (r *FileReader) FindOriginalURL(shortURL string) (*models.AllURLs, error) {
+	var fileString models.AllURLs
 
 	scanner := bufio.NewScanner(r.file)
 
@@ -158,7 +161,7 @@ func (r *FileReader) FindOriginalURL(shortURL string) (*models.FileString, error
 		}
 	}
 	if fileString.ShortURL != shortURL {
-		return nil, ErrNotFound
+		return nil, models.ErrNotFound
 	}
 	return &fileString, nil
 }

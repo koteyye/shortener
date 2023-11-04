@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"errors"
+	"github.com/koteyye/shortener/internal/app/models"
 	"sync"
 )
 
@@ -14,15 +14,19 @@ func NewURLMap() *URLMap {
 	return &URLMap{storage: sync.Map{}}
 }
 
+func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
+	return nil, models.ErrMockNotSupported
+}
+
 func (u *URLMap) Ping(_ context.Context) error {
-	return errors.New("не поддерживается на моках")
+	return models.ErrMockNotSupported
 }
 
 func (u *URLMap) GetShortURL(_ context.Context, _ string) (string, error) {
-	return "", errors.New("не поддерживается на моках")
+	return "", models.ErrMockNotSupported
 }
 
-func (u *URLMap) AddURL(_ context.Context, k, s string) error {
+func (u *URLMap) AddURL(_ context.Context, k, s string, _ string) error {
 	u.storage.Store(k, s)
 	return nil
 }
@@ -31,7 +35,7 @@ func (u *URLMap) GetURL(_ context.Context, k string) (string, error) {
 
 	url, ok := u.storage.Load(k)
 	if !ok {
-		return "", ErrNotFound
+		return "", models.ErrNotFound
 	}
 	return url.(string), nil
 
