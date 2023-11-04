@@ -147,7 +147,7 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 
 	urls, _ := mapRequestDeleteByUser(r)
 
-	h.services.Shortener.DeleteURLByUser(ctx, urls, userID)
+	go h.services.Shortener.DeleteURLByUser(context.Background(), urls, userID)
 
 	res.WriteHeader(http.StatusAccepted)
 }
