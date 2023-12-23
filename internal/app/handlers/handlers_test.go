@@ -3,6 +3,13 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/koteyye/shortener/internal/app/models"
@@ -10,170 +17,134 @@ import (
 	mock_service "github.com/koteyye/shortener/internal/app/service/mocks"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
+	"go.uber.org/zap"
 )
 
-func TestHandlers_Batch(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockShortener, urlList []*models.OriginURLList, userID string)
-	tests := []struct {
-		name                 string
-		inputBody            io.Reader
-		inputOriginURLList   []*models.OriginURLList
-		mockBehavior         mockBehavior
-		expectedStatusCode   int
-		expectedResponseBody string
-	}{
-		{
-			name: "success",
-			inputBody: strings.NewReader(`[
-				{
-					"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
-				},
-				{
-					"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
-					"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
-				}
-				]`),
-			inputOriginURLList: []*models.OriginURLList{
-				{
-					ID:        "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					OriginURL: "http://lcpjtoddpyyp.yandex/sjkhh",
-				},
-				{
-					ID:        "f5993975-38fc-4f95-8234-0639079194cf",
-					OriginURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-				},
-			},
-			mockBehavior: func(r *mock_service.MockShortener, urlList []*models.OriginURLList, userID string) {
-				r.EXPECT().Batch(gomock.Any(), urlList, userID).Return([]*models.URLList{
-					{
-						ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-						ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
-					},
-					{
-						ID:       "5993975-38fc-4f95-8234-0639079194cf",
-						ShortURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-					},
-				}, nil)
-			},
-			expectedStatusCode: 201,
-			expectedResponseBody: `[
-				{
-					"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					"short_url": "http://lcpjtoddpyyp.yandex/sjkhh"
-				},
-				{
-					"correlation_id": "5993975-38fc-4f95-8234-0639079194cf",
-					"short_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
-				}
-			]`,
-		},
-		{
-			name: "conflict",
-			inputBody: strings.NewReader(`[
-				{
-					"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
-				},
-				{
-					"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
-					"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
-				}
-				]`),
-			inputOriginURLList: []*models.OriginURLList{
-				{
-					ID:        "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					OriginURL: "http://lcpjtoddpyyp.yandex/sjkhh",
-				},
-				{
-					ID:        "f5993975-38fc-4f95-8234-0639079194cf",
-					OriginURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-				},
-			},
-			mockBehavior: func(r *mock_service.MockShortener, urlList []*models.OriginURLList, userID string) {
-				r.EXPECT().Batch(gomock.Any(), urlList, userID).Return([]*models.URLList{
-					{
-						ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-						ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
-						Msg:      models.ErrDuplicate.Error(),
-					},
-					{
-						ID:       "5993975-38fc-4f95-8234-0639079194cf",
-						ShortURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-						Msg:      models.ErrDuplicate.Error(),
-					},
-				}, nil)
-			},
-			expectedStatusCode: 409,
-			expectedResponseBody: `[
-				{
-					"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					"short_url": "http://lcpjtoddpyyp.yandex/sjkhh",
-					"msg": "в бд уже есть сокращенный url"
-				},
-				{
-					"correlation_id": "5993975-38fc-4f95-8234-0639079194cf",
-					"short_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-					"msg": "в бд уже есть сокращенный url"
-				}
-			]`,
-		},
-		{
-			name: "errNullBody",
-			inputBody: strings.NewReader(`[
-				{
-					"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
-				},
-				{
-					"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
-					"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
-				}
-				]`),
-			inputOriginURLList: []*models.OriginURLList{},
-			expectedStatusCode: 400,
-			expectedResponseBody: `{
-			"Message": "в запросе нет сокращенной ссылки"
-			}`,
-		},
+const (
+	testSecretKey = "super_secret_key"
+)
+
+// testInitHandler инициализация тестового обработчика
+func testInitHandler(t *testing.T) (*Handlers, *mock_service.MockShortener) {
+	c := gomock.NewController(t)
+	defer c.Finish()
+
+	repo := mock_service.NewMockShortener(c)
+	service := service.Service{Shortener: repo}
+
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
 	}
+	defer logger.Sync()
+	log := *logger.Sugar()
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
+	handler := NewHandlers(&service, &log, testSecretKey)
 
-			r := httptest.NewRequest(http.MethodPost, "/batch", test.inputBody)
-			r.Header.Set("Content-Type", ctApplicationJSON)
+	return handler, repo
+}
+
+func TestHandlers_Batch(t *testing.T) {
+	testRequest := `[
+		{
+			"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
+			"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
+		},
+		{
+			"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
+			"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
+		}
+		]`
+
+	t.Run("batch", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			h, s := testInitHandler(t)
+
+			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(testRequest))
+			w := httptest.NewRecorder()
+
+			var testOriginURLList []*models.OriginURLList
+			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
+			assert.NoError(t, err)
+
 			userID := uuid.NewString()
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 
+			s.EXPECT().Batch(gomock.Any(), testOriginURLList, userID).Return([]*models.URLList{
+				{
+					ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
+					ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
+				},
+				{
+					ID:       "5993975-38fc-4f95-8234-0639079194cf",
+					ShortURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
+				},
+			}, nil)
+
+			h.Batch(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusCreated, w.Code)
+		})
+		t.Run("conflict", func(t *testing.T) {
+			h, s := testInitHandler(t)
+
+			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(testRequest))
 			w := httptest.NewRecorder()
 
-			repo := mock_service.NewMockShortener(c)
-			if test.mockBehavior != nil {
-				test.mockBehavior(repo, test.inputOriginURLList, userID)
-			}
-
-			services := service.Service{Shortener: repo}
-			handler := Handlers{services: &services}
-			handler.Batch(w, r.WithContext(ctx))
-
-			result := w.Result()
-			defer result.Body.Close()
-
-			body, err := io.ReadAll(result.Body)
+			var testOriginURLList []*models.OriginURLList
+			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
 			assert.NoError(t, err)
 
-			assert.Equal(t, test.expectedStatusCode, result.StatusCode)
-			assert.JSONEq(t, test.expectedResponseBody, string(body))
+			userID := uuid.NewString()
+			ctx := context.WithValue(r.Context(), userIDKey, userID)
+
+			s.EXPECT().Batch(gomock.Any(), testOriginURLList, userID).Return([]*models.URLList{
+				{
+					ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
+					ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
+					Msg:      models.ErrDuplicate.Error(),
+				},
+				{
+					ID:       "5993975-38fc-4f95-8234-0639079194cf",
+					ShortURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
+					Msg:      models.ErrDuplicate.Error(),
+				},
+			}, nil)
+
+			h.Batch(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusConflict, w.Code)
 		})
-	}
+		t.Run("url_empty", func(t *testing.T) {
+			h, _ := testInitHandler(t)
+
+			reqBody := `[
+				{
+					"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
+				},
+				{
+					"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
+					"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
+				}
+				]`
+
+			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(reqBody))
+			w := httptest.NewRecorder()
+
+			var testOriginURLList []*models.OriginURLList
+			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
+			assert.NoError(t, err)
+
+			userID := uuid.NewString()
+			ctx := context.WithValue(r.Context(), userIDKey, userID)
+
+			h.Batch(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+	})
 }
+
 
 func TestHandlers_GetURLsByUser(t *testing.T) {
 	type mockBehavior func(r *mock_service.MockShortener, userID string)

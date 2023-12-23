@@ -13,6 +13,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	_ "net/http/pprof"
 )
 
 func main() {
