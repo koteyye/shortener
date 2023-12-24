@@ -145,7 +145,6 @@ func TestHandlers_Batch(t *testing.T) {
 	})
 }
 
-
 func TestHandlers_GetURLsByUser(t *testing.T) {
 	type mockBehavior func(r *mock_service.MockShortener, userID string)
 	tests := []struct {
