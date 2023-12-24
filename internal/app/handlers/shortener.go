@@ -29,8 +29,6 @@ import (
 // ShortenURL godoc
 // @Tags Shortener
 // @Summary Запрос на сокращение URL
-// @Accept string
-// @Produce string
 // @Success 201 {string} string "http://localhost:8081/nmgvwemvgpwemv"
 // @Failure 400 {string} string "Некорректный запрос"
 // @Router / [post]

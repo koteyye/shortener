@@ -1,0 +1,31 @@
+info:
+  contact: {}
+paths:
+  /:
+    post:
+      responses:
+        "201":
+          description: http://localhost:8081/nmgvwemvgpwemv
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+      summary: Запрос на сокращение URL
+      tags:
+      - Shortener
+  /ping:
+    get:
+      operationId: infoPing
+      responses:
+        "200":
+          description: Подключение установлено
+          schema:
+            type: string
+        "500":
+          description: Ошибка подключения
+          schema:
+            type: string
+      summary: Запрос подключения к БД
+swagger: "2.0"

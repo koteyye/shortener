@@ -76,7 +76,7 @@ func (h Handlers) Authorization(next http.Handler) http.Handler {
 					mapErrorToResponse(res, r, http.StatusUnauthorized, fmt.Errorf("выпущен новый токен, текущий: %v", err).Error())
 					return
 				}
-				mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возника ошибка при получении пользователя по токену: %v", err).Error())
+				mapErrorToResponse(res, r, http.StatusBadRequest, fmt.Errorf("возникла ошибка при получении пользователя по токену: %v", err).Error())
 				return
 			}
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
