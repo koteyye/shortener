@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
+
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/handlers"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/koteyye/shortener/server"
-	"go.uber.org/zap"
 
 	"net/http"
 	_ "net/http/pprof"
