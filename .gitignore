@@ -25,3 +25,4 @@ vendor/
 cmd/client
 
 .gitignore
+shortenertestbeta
