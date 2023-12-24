@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/go-chi/chi"
 	"github.com/koteyye/shortener/internal/app/service"
-	"go.uber.org/zap"
 	"github.com/swaggo/http-swagger/v2"
+	"go.uber.org/zap"
 
 	_ "github.com/koteyye/shortener/docs"
 )
@@ -29,7 +29,7 @@ func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
-	  ))
+	))
 
 	r.Route(baseURL, func(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
