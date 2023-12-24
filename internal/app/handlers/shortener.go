@@ -11,6 +11,29 @@ import (
 	"github.com/koteyye/shortener/internal/app/models"
 )
 
+// @Title Shortener
+// @Description Сервис для сокращения URL.
+// @Version 1.0
+
+// @Contact.email koteyye@yandex.ru
+
+// @BasePath /
+// @Host localhost:8081
+
+// @Tag.name Info
+// @Tag.description "Группа запросов состояния сервиса"
+
+// @Tag.name Shortener
+// @Tag.desctiption "Группа запросов для сокращения URL"
+
+// ShortenURL godoc
+// @Tags Shortener
+// @Summary Запрос на сокращение URL
+// @Accept string
+// @Produce string
+// @Success 201 {string} string "http://localhost:8081/nmgvwemvgpwemv"
+// @Failure 400 {string} string "Некорректный запрос"
+// @Router / [post]
 func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -64,6 +87,12 @@ func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	mapURLListToJSONResponse(res, http.StatusCreated, list)
 }
 
+// Ping godoc
+// @Summary Запрос подключения к БД
+// @ID infoPing
+// @Success 200 {string} string "Подключение установлено"
+// @Failure 500 {string} string "Ошибка подключения"
+// @Router /ping [get]
 func (h Handlers) Ping(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
