@@ -11,6 +11,7 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
+// Shortener интерфейс сервисного слоя.
 type Shortener interface {
 	AddShortURL(ctx context.Context, url string, userID string) (string, error)
 	GetOriginURL(ctx context.Context, shortURL string) (string, error)
@@ -21,10 +22,12 @@ type Shortener interface {
 	DeleteURLByUser(ctx context.Context, urls []string, userID string)
 }
 
+// Service структура сервисного слоя.
 type Service struct {
 	Shortener
 }
 
+// NewService возвращает новый экземпляр сервиса.
 func NewService(storage *storage.URLHandler, shortener *config.Shortener, logger *zap.SugaredLogger) *Service {
 	return &Service{
 		Shortener: NewShortenerService(storage.URLStorage, shortener, logger),

@@ -5,11 +5,13 @@ import (
 	"github.com/lib/pq"
 )
 
-const (
-	PqDuplicateErr  = "23505"
-	JWTExpiredToken = 16
-)
+// PqDuplicateErr обрабатываемая ошибка PQ.
+const PqDuplicateErr = "23505"
 
+// JWTExpiredToken время жизни токена.
+const JWTExpiredToken = 16
+
+// Обрабатываемые ошибки сервиса.
 var (
 	ErrNullRequestBody       = errors.New("в запросе нет сокращенной ссылки")
 	ErrInvalidRequestBodyURL = errors.New("некорректно указана ссылка в запросе")
@@ -23,6 +25,7 @@ var (
 	ErrDeleted               = errors.New("ссылка удалена")
 )
 
+// MapConflict определеяет является ошибка конфликтом
 func MapConflict(err error) bool {
 	var errPQ *pq.Error
 	if errors.As(err, &errPQ) {
@@ -33,6 +36,7 @@ func MapConflict(err error) bool {
 	return false
 }
 
+// MapBatchConflict определеяет является ли множество ссылок на сокращение конфликтом
 func MapBatchConflict(list []*URLList) bool {
 	msgCount := 0
 	for _, item := range list {

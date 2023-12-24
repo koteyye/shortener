@@ -12,19 +12,23 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// Claims структура для требований к токену.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
 }
 
+// ctxUserKey контекстный ключ пользователя.
 type ctxUserKey string
 
+// userIDKey значение контекстного ключа.
 const userIDKey ctxUserKey = "user_id"
 
 const (
 	TokenExp = time.Hour * 12
 )
 
+// Authorization авторизация пользователя.
 func (h Handlers) Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("authorization")

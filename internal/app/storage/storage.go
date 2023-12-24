@@ -9,7 +9,7 @@ import (
 )
 
 //go:generate mockgen -source=storage.go -destination=mocks/mock.go
-
+// URLStorage интерфейс хранилища.
 type URLStorage interface {
 	AddURL(context.Context, string, string, string) error
 	GetURL(context.Context, string) (*models.URL, error)
@@ -19,10 +19,12 @@ type URLStorage interface {
 	DeleteURLByUser(context.Context, chan string) error
 }
 
+// URLHandler структура обработчика URL
 type URLHandler struct {
 	URLStorage
 }
 
+// NewURLHandle возвращает новый экземпляр обработчика URL
 func NewURLHandle(log *zap.SugaredLogger, db *sqlx.DB, filePath string) (*URLHandler, error) {
 	if db != nil {
 		log.Info("start storage in db")

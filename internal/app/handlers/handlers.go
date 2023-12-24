@@ -9,16 +9,19 @@ import (
 	_ "github.com/koteyye/shortener/docs"
 )
 
+// Handlers http обработик сервиса
 type Handlers struct {
 	services  *service.Service
 	logger    *zap.SugaredLogger
 	secretKey string
 }
 
+// NewHandlers возвращает экземпляр http обработчика
 func NewHandlers(services *service.Service, logger *zap.SugaredLogger, secretKey string) *Handlers {
 	return &Handlers{services: services, logger: logger, secretKey: secretKey}
 }
 
+// InitRoutes инициализация роутов
 func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 	r := chi.NewRouter()
 
