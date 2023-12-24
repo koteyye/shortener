@@ -29,7 +29,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректный запрос",
+                        "description": "Bad Request",
                         "schema": {
                             "type": "string"
                         }
@@ -37,10 +37,161 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/shorten": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shortener"
+                ],
+                "summary": "Запрос на сокращение URL с JSON телом",
+                "responses": {
+                    "201": {
+                        "description": "http://localhost:8081/powsevgpoewkvewv",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    },
+                    "409": {
+                        "description": "http://localhost:8081/pojmpogvkewpove",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/urls": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shortener"
+                ],
+                "summary": "Запрос на получение всех сокращенных URL текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AllURLs"
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shortener"
+                ],
+                "summary": "Запрос на удаление сокращенных URL по списку",
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    }
+                }
+            }
+        },
+        "/batch": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shortener"
+                ],
+                "summary": "Запрос на множественное сокращение URL",
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.URLList"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.URLList"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.errorJSON"
+                        }
+                    }
+                }
+            }
+        },
         "/ping": {
             "get": {
+                "tags": [
+                    "Info"
+                ],
                 "summary": "Запрос подключения к БД",
-                "operationId": "infoPing",
                 "responses": {
                     "200": {
                         "description": "Подключение установлено",
@@ -54,6 +205,63 @@ const docTemplate = `{
                             "type": "string"
                         }
                     }
+                }
+            }
+        },
+        "/{shortURL}": {
+            "get": {
+                "tags": [
+                    "Shortener"
+                ],
+                "summary": "Запрос на получение оригинального URL",
+                "responses": {
+                    "307": {
+                        "description": "Temporary Redirect"
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handlers.errorJSON": {
+            "type": "object",
+            "properties": {
+                "Message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AllURLs": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "original_url": {
+                    "type": "string"
+                },
+                "short_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.URLList": {
+            "type": "object",
+            "properties": {
+                "correlation_id": {
+                    "type": "string"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "short_url": {
+                    "type": "string"
                 }
             }
         }
