@@ -30,7 +30,7 @@ import (
 // @Tags Shortener
 // @Summary Запрос на сокращение URL
 // @Success 201 {string} string "http://localhost:8081/nmgvwemvgpwemv"
-// @Failure 400 {string} string "Некорректный запрос"
+// @Failure 400 {string} string Некорректный запрос"
 // @Router / [post]
 func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
@@ -61,6 +61,16 @@ func (h Handlers) ShortenURL(res http.ResponseWriter, r *http.Request) {
 	mapToStringResponse(res, http.StatusCreated, result)
 }
 
+// Batch godoc
+// @Tags Shortener
+// @Summary Запрос на множественное сокращение URL
+// @Accept json
+// @Produce json
+// @Success 201 {array} models.URLList
+// @Failure 409 {array} models.URLList
+// @Failure 400 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /batch [post]
 func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -86,8 +96,8 @@ func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 }
 
 // Ping godoc
+// @Tags Info
 // @Summary Запрос подключения к БД
-// @ID infoPing
 // @Success 200 {string} string "Подключение установлено"
 // @Failure 500 {string} string "Ошибка подключения"
 // @Router /ping [get]
@@ -103,6 +113,12 @@ func (h Handlers) Ping(res http.ResponseWriter, r *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
+// GetOriginalURL godoc
+// @Tags Shortener
+// @Summary Запрос на получение оригинального URL
+// @Success 307
+// @Failure 400 {string} string "Некорректный запрос"
+// @Router /{shortURL} [get]
 func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
@@ -120,6 +136,16 @@ func (h Handlers) GetOriginalURL(res http.ResponseWriter, r *http.Request) {
 	http.Redirect(res, r, originalURL, http.StatusTemporaryRedirect)
 }
 
+// JSONShortenURL godoc
+// @Tags Shortener
+// @Summary Запрос на сокращение URL с JSON телом
+// @Accept json
+// @Produce json
+// @Success 201 {string} string "http://localhost:8081/powsevgpoewkvewv"
+// @Failure 400 {object} errorJSON
+// @Failure 409 {string} string "http://localhost:8081/pojmpogvkewpove"
+// @Failure 500 {object} errorJSON
+// @Router /api/shorten [post]
 func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
@@ -147,6 +173,15 @@ func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 	mapShortURLToJSONResponse(res, http.StatusCreated, result)
 }
 
+// GetURLsByUser godoc
+// @Tags Shortener
+// @Summary Запрос на получение всех сокращенных URL текущего пользователя
+// @Produce json
+// @Success 200 {array}  models.AllURLs
+// @Failure 204 {object} errorJSON
+// @Failure 400 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/user/urls [get]
 func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
@@ -167,6 +202,14 @@ func (h Handlers) GetURLsByUser(res http.ResponseWriter, r *http.Request) {
 	mapAllURLsToJSONResponse(res, http.StatusOK, allURLs)
 }
 
+// DeleteURLsByUser godoc
+// @Tags Shortener
+// @Summary Запрос на удаление сокращенных URL по списку
+// @Accept json
+// @Produce json
+// @Success 202
+// @Failure 500 {object} errorJSON
+// @Router /api/user/urls [delete]
 func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
