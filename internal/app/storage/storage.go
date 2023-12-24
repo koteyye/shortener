@@ -8,8 +8,9 @@ import (
 	"go.uber.org/zap"
 )
 
-//go:generate mockgen -source=storage.go -destination=mocks/mock.go
 // URLStorage интерфейс хранилища.
+//
+//go:generate mockgen -source=storage.go -destination=mocks/mock.go
 type URLStorage interface {
 	AddURL(context.Context, string, string, string) error
 	GetURL(context.Context, string) (*models.URL, error)
