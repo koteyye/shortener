@@ -24,6 +24,7 @@ type ctxUserKey string
 // userIDKey значение контекстного ключа.
 const userIDKey ctxUserKey = "user_id"
 
+// TokenExp время жизни токена.
 const (
 	TokenExp = time.Hour * 12
 )

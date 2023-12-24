@@ -131,6 +131,7 @@ func (w *FileWriter) WriteShortURL(value models.AllURLs) error {
 	return err
 }
 
+// Close закрыть файл.
 func (w *FileWriter) Close() error {
 	return w.file.Close()
 }
