@@ -39,8 +39,8 @@ func (f *FileStorage) GetShortURL(_ context.Context, _ string) (string, error) {
 	return "", models.ErrFileNotSupported
 }
 
-// Ping проверка подключения к БД (не поддерживается).
-func (f *FileStorage) Ping(_ context.Context) error {
+// GetDBPing проверка подключения к БД (не поддерживается).
+func (f *FileStorage) GetDBPing(_ context.Context) error {
 	return models.ErrFileNotSupported
 }
 

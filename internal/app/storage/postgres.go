@@ -45,7 +45,7 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	}
 }
 
-// GetURLByUser получить URL текущего пользователя.
+// GetURLByUser получить список URL, созданных текущим пользователем.
 func (d *DBStorage) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
 	var result []*models.AllURLs
 	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userID)
@@ -114,7 +114,7 @@ func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls chan string) error
 	return nil
 }
 
-// Ping проверить подключение к БД.
-func (d *DBStorage) Ping(ctx context.Context) error {
+// GetDBPing проверить подключение к БД.
+func (d *DBStorage) GetDBPing(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }

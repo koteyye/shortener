@@ -15,7 +15,7 @@ import (
 type Shortener interface {
 	AddShortURL(ctx context.Context, url string, userID string) (string, error)
 	GetOriginURL(ctx context.Context, shortURL string) (string, error)
-	PingDB(ctx context.Context) error
+	GetDBPing(ctx context.Context) error
 	Batch(ctx context.Context, originalList []*models.OriginURLList, userID string) ([]*models.URLList, error)
 	GetShortURLFromOriginal(ctx context.Context, originalURL string) (string, error)
 	GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error)

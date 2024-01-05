@@ -46,9 +46,9 @@ func (s ShortenerService) Batch(ctx context.Context, originalList []*models.Orig
 	return urllist, nil
 }
 
-// PingDB проверка подключения к БД.
-func (s ShortenerService) PingDB(ctx context.Context) error {
-	return s.storage.Ping(ctx)
+// GetDBPing проверка подключения к БД.
+func (s ShortenerService) GetDBPing(ctx context.Context) error {
+	return s.storage.GetDBPing(ctx)
 }
 
 // GetOriginURL получение оригинального URL.

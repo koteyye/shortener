@@ -14,7 +14,7 @@ import (
 type URLStorage interface {
 	AddURL(context.Context, string, string, string) error
 	GetURL(context.Context, string) (*models.URL, error)
-	Ping(ctx context.Context) error
+	GetDBPing(ctx context.Context) error
 	GetShortURL(context.Context, string) (string, error)
 	GetURLByUser(context.Context, string) ([]*models.AllURLs, error)
 	DeleteURLByUser(context.Context, chan string) error

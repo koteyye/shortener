@@ -105,7 +105,7 @@ func (h Handlers) Ping(res http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	err := h.services.PingDB(ctx)
+	err := h.services.GetDBPing(ctx)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

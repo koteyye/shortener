@@ -26,8 +26,8 @@ func (u *URLMap) DeleteURLByUser(_ context.Context, _ chan string) error {
 	return models.ErrMockNotSupported
 }
 
-// Ping проверяет подключение к БД (не поддерживается).
-func (u *URLMap) Ping(_ context.Context) error {
+// GetDBPing проверяет подключение к БД (не поддерживается).
+func (u *URLMap) GetDBPing(_ context.Context) error {
 	return models.ErrMockNotSupported
 }
 
