@@ -42,10 +42,10 @@ build:
 .PHONY: autotest
 autotest: build
 	@./shortenertestbeta \
-		-test.v -test.run=^TestIteration15 \
+		-test.v -test.run=^TestIteration16 \
 		-binary-path=cmd/shortener/shortener \
 		-server-host=localhost \
 		-server-port=8081 \
-		-server-base-url=localhost:8081
-		-source-path=/ \
+		-server-base-url=localhost:8081 \
+		-source-path=cmd/shortener \
 		-database-dsn=${DATABASE_SHORTENER} \
