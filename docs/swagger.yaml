@@ -1,0 +1,165 @@
+definitions:
+  handlers.errorJSON:
+    properties:
+      Message:
+        type: string
+    type: object
+  models.AllURLs:
+    properties:
+      id:
+        type: integer
+      original_url:
+        type: string
+      short_url:
+        type: string
+    type: object
+  models.URLList:
+    properties:
+      correlation_id:
+        type: string
+      msg:
+        type: string
+      short_url:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    post:
+      responses:
+        "201":
+          description: http://localhost:8081/nmgvwemvgpwemv
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Запрос на сокращение URL
+      tags:
+      - Shortener
+  /{shortURL}:
+    get:
+      responses:
+        "307":
+          description: Temporary Redirect
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+      summary: Запрос на получение оригинального URL
+      tags:
+      - Shortener
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: http://localhost:8081/powsevgpoewkvewv
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+        "409":
+          description: http://localhost:8081/pojmpogvkewpove
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+      summary: Запрос на сокращение URL с JSON телом
+      tags:
+      - Shortener
+  /api/user/urls:
+    delete:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+      summary: Запрос на удаление сокращенных URL по списку
+      tags:
+      - Shortener
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AllURLs'
+            type: array
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+      summary: Запрос на получение всех сокращенных URL текущего пользователя
+      tags:
+      - Shortener
+  /batch:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/models.URLList'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+        "409":
+          description: Conflict
+          schema:
+            items:
+              $ref: '#/definitions/models.URLList'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorJSON'
+      summary: Запрос на множественное сокращение URL
+      tags:
+      - Shortener
+  /ping:
+    get:
+      responses:
+        "200":
+          description: Подключение установлено
+          schema:
+            type: string
+        "500":
+          description: Ошибка подключения
+          schema:
+            type: string
+      summary: Запрос подключения к БД
+      tags:
+      - Info
+swagger: "2.0"

@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// Compress сжатие ответа.
 func (h Handlers) Compress(next http.Handler) http.Handler {
 	compressFn := func(res http.ResponseWriter, r *http.Request) {
 		contentEncoding := r.Header.Get("Content-Encoding")
@@ -47,16 +48,19 @@ type gzipWriter struct {
 	writer *gzip.Writer
 }
 
+// WriteString запись ответа в виде строки.
 func (g *gzipWriter) WriteString(s string) (int, error) {
 	g.Header().Del("Content-Length")
 	return g.writer.Write([]byte(s))
 }
 
+// Write запись ответа в виде байт.
 func (g *gzipWriter) Write(data []byte) (int, error) {
 	g.Header().Del("Content-Length")
 	return g.writer.Write(data)
 }
 
+// WriteHeader запись заголовка.
 func (g *gzipWriter) WriteHeader(code int) {
 	g.Header().Del("Content-Length")
 	g.ResponseWriter.WriteHeader(code)

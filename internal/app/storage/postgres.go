@@ -11,14 +11,12 @@ import (
 	"time"
 )
 
-type ctxUserKey string
-
-const userIDKey ctxUserKey = "user_id"
-
+// DBStorage структура БД.
 type DBStorage struct {
 	db *sqlx.DB
 }
 
+// NewPostgres возвращает новый экземпляр БД.
 func NewPostgres(db *sqlx.DB) *DBStorage {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -47,6 +45,7 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 	}
 }
 
+// GetURLByUser получить список URL, созданных текущим пользователем.
 func (d *DBStorage) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
 	var result []*models.AllURLs
 	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userID)
@@ -59,6 +58,7 @@ func (d *DBStorage) GetURLByUser(ctx context.Context, userID string) ([]*models.
 	return result, nil
 }
 
+// AddURL добавить URL в базу.
 func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL string, userID string) error {
 	_, err := d.db.ExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values ($1, $2, $3)", shortURL, originalURL, userID)
 	if err != nil {
@@ -67,6 +67,7 @@ func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL str
 	return nil
 }
 
+// GetURL получить URL из базы.
 func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (*models.URL, error) {
 	var result models.URL
 	err := d.db.GetContext(ctx, &result, "select shorturl, originalurl, is_deleted from shorturl where shorturl = $1", shortURL)
@@ -79,6 +80,7 @@ func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (*models.URL, e
 	return &result, nil
 }
 
+// GetShortURL получить сокращенный URL из базы.
 func (d *DBStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
 	var result string
 	err := d.db.GetContext(ctx, &result, "select shorturl from shorturl where originalurl = $1", originalURL)
@@ -91,6 +93,7 @@ func (d *DBStorage) GetShortURL(ctx context.Context, originalURL string) (string
 	return result, nil
 }
 
+// DeleteURLByUser удалить из базы сокращенные URL по поступающему каналу.
 func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls chan string) error {
 	tx, err := d.db.Begin()
 	if err != nil {
@@ -111,6 +114,7 @@ func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls chan string) error
 	return nil
 }
 
-func (d *DBStorage) Ping(ctx context.Context) error {
+// GetDBPing проверить подключение к БД.
+func (d *DBStorage) GetDBPing(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }

@@ -13,6 +13,7 @@ const (
 	deafultSecretKey       = "jpoifjewf4093fgu902fj9023jf092jfc023f"
 )
 
+// Config конфигурация сервиса.
 type Config struct {
 	Server          *Server
 	Shortener       *Shortener
@@ -22,15 +23,18 @@ type Config struct {
 	Pprof           string
 }
 
+// Server сервер конфигурации сервиса.
 type Server struct {
 	BaseURL string `default:"/"`
 	Listen  string
 }
 
+// Shortener адрес сокращателя ссылок.
 type Shortener struct {
 	Listen string
 }
 
+// ENVValue конфигурация переменного окружения.
 type ENVValue struct {
 	Server          string `env:"SERVER_ADDRESS"`
 	Shortener       string `env:"BASE_URL"`
@@ -40,6 +44,7 @@ type ENVValue struct {
 	Pprof           string `env:"PPROF"`
 }
 
+// cliFlag флаги командной строки.
 type cliFlag struct {
 	flagJWT      string
 	flagAddress  string
@@ -49,6 +54,7 @@ type cliFlag struct {
 	flagPprof    string
 }
 
+// GetConfig получение конфигурации.
 func GetConfig() (*Config, error) {
 	cliFlags := &cliFlag{}
 	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")

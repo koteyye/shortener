@@ -13,16 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// ShortenerService структура сервисного слоя сокращателя.
 type ShortenerService struct {
 	storage   storage.URLStorage
 	shortener *config.Shortener
 	logger    *zap.SugaredLogger
 }
 
+// NewShortenerService возвращает новый экземпляр сервисного слоя сокращателя.
 func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener, logger *zap.SugaredLogger) *ShortenerService {
 	return &ShortenerService{storage: storage, shortener: shortener, logger: logger}
 }
 
+// Batch сокращение множества URL.
 func (s ShortenerService) Batch(ctx context.Context, originalList []*models.OriginURLList, userID string) ([]*models.URLList, error) {
 	var urllist []*models.URLList
 	for _, origin := range originalList {
@@ -43,10 +46,12 @@ func (s ShortenerService) Batch(ctx context.Context, originalList []*models.Orig
 	return urllist, nil
 }
 
-func (s ShortenerService) PingDB(ctx context.Context) error {
-	return s.storage.Ping(ctx)
+// GetDBPing проверка подключения к БД.
+func (s ShortenerService) GetDBPing(ctx context.Context) error {
+	return s.storage.GetDBPing(ctx)
 }
 
+// GetOriginURL получение оригинального URL.
 func (s ShortenerService) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
 	res, err := s.storage.GetURL(ctx, shortURL)
 	if err != nil {
@@ -58,6 +63,7 @@ func (s ShortenerService) GetOriginURL(ctx context.Context, shortURL string) (st
 	return res.OriginalURL, nil
 }
 
+// AddShortURL сокращение оригинального URL.
 func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string, userID string) (string, error) {
 	res := generateUnitKey()
 	if err := s.storage.AddURL(ctx, res, urlVal, userID); err != nil {
@@ -70,6 +76,7 @@ func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string, userID
 	return urlRes, nil
 }
 
+// GetShortURLFromOriginal получение сокращенного URL по оригинальному.
 func (s ShortenerService) GetShortURLFromOriginal(ctx context.Context, urlVal string) (string, error) {
 	short, err := s.storage.GetShortURL(ctx, urlVal)
 	if err != nil {
@@ -82,6 +89,7 @@ func (s ShortenerService) GetShortURLFromOriginal(ctx context.Context, urlVal st
 	return urlRes, nil
 }
 
+// GetURLByUser получение списка URL по текущему пользователю.
 func (s ShortenerService) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
 	allURLs, err := s.storage.GetURLByUser(ctx, userID)
 	for _, urlItem := range allURLs {
@@ -94,6 +102,7 @@ func (s ShortenerService) GetURLByUser(ctx context.Context, userID string) ([]*m
 	return allURLs, err
 }
 
+// DeleteURLByUser удаление URL по списку
 func (s ShortenerService) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
 
 	doneCh := make(chan struct{})

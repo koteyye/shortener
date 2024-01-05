@@ -8,21 +8,24 @@ import (
 	"go.uber.org/zap"
 )
 
+// URLStorage интерфейс хранилища.
+//
 //go:generate mockgen -source=storage.go -destination=mocks/mock.go
-
 type URLStorage interface {
 	AddURL(context.Context, string, string, string) error
 	GetURL(context.Context, string) (*models.URL, error)
-	Ping(ctx context.Context) error
+	GetDBPing(ctx context.Context) error
 	GetShortURL(context.Context, string) (string, error)
 	GetURLByUser(context.Context, string) ([]*models.AllURLs, error)
 	DeleteURLByUser(context.Context, chan string) error
 }
 
+// URLHandler структура обработчика URL
 type URLHandler struct {
 	URLStorage
 }
 
+// NewURLHandle возвращает новый экземпляр обработчика URL
 func NewURLHandle(log *zap.SugaredLogger, db *sqlx.DB, filePath string) (*URLHandler, error) {
 	if db != nil {
 		log.Info("start storage in db")

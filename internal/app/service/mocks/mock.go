@@ -77,6 +77,20 @@ func (mr *MockShortenerMockRecorder) DeleteURLByUser(ctx, urls, userID interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLByUser", reflect.TypeOf((*MockShortener)(nil).DeleteURLByUser), ctx, urls, userID)
 }
 
+// GetDBPing mocks base method.
+func (m *MockShortener) GetDBPing(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDBPing", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetDBPing indicates an expected call of GetDBPing.
+func (mr *MockShortenerMockRecorder) GetDBPing(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDBPing", reflect.TypeOf((*MockShortener)(nil).GetDBPing), ctx)
+}
+
 // GetOriginURL mocks base method.
 func (m *MockShortener) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
 	m.ctrl.T.Helper()
@@ -120,18 +134,4 @@ func (m *MockShortener) GetURLByUser(ctx context.Context, userID string) ([]*mod
 func (mr *MockShortenerMockRecorder) GetURLByUser(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByUser", reflect.TypeOf((*MockShortener)(nil).GetURLByUser), ctx, userID)
-}
-
-// PingDB mocks base method.
-func (m *MockShortener) PingDB(ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PingDB", ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PingDB indicates an expected call of PingDB.
-func (mr *MockShortenerMockRecorder) PingDB(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PingDB", reflect.TypeOf((*MockShortener)(nil).PingDB), ctx)
 }

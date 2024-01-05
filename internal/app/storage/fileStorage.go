@@ -10,11 +10,13 @@ import (
 	"os"
 )
 
+// FileStorage структура файлового хранилища.
 type FileStorage struct {
 	fileWriter *FileWriter
 	fileReader *FileReader
 }
 
+// NewFileStorage возвращает новый экземпляр файлового хранилища.
 func NewFileStorage(filepath string) *FileStorage {
 	return &FileStorage{
 		fileWriter: &FileWriter{filePath: filepath},
@@ -22,22 +24,27 @@ func NewFileStorage(filepath string) *FileStorage {
 	}
 }
 
+// DeleteURLByUser удаление URL текущего пользователя (не поддерживается).
 func (f *FileStorage) DeleteURLByUser(_ context.Context, _ chan string) error {
 	return models.ErrMockNotSupported
 }
 
+// GetURLByUser получение URL текущего пользователя (не поддерживается).
 func (f *FileStorage) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
 	return nil, models.ErrFileNotSupported
 }
 
+// GetShortURL получение сокращенного URL по оригинальному (не поддерживается).
 func (f *FileStorage) GetShortURL(_ context.Context, _ string) (string, error) {
 	return "", models.ErrFileNotSupported
 }
 
-func (f *FileStorage) Ping(_ context.Context) error {
+// GetDBPing проверка подключения к БД (не поддерживается).
+func (f *FileStorage) GetDBPing(_ context.Context) error {
 	return models.ErrFileNotSupported
 }
 
+// AddURL добавление URL в файловое хранилище.
 func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) error {
 	var id int
 
@@ -75,6 +82,7 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) er
 	return nil
 }
 
+// GetURL получение URL из файлового хранилища.
 func (f *FileStorage) GetURL(_ context.Context, k string) (*models.URL, error) {
 	reader, err := f.fileReader.NewReader()
 	if err != nil {
@@ -89,17 +97,20 @@ func (f *FileStorage) GetURL(_ context.Context, k string) (*models.URL, error) {
 	return &models.URL{OriginalURL: readFile.OriginalURL}, nil
 }
 
+// FileWriter структура файлового писателя.
 type FileWriter struct {
 	filePath string
 	file     *os.File
 	encoder  *json.Encoder
 }
 
+// FileReader структура файлового читателя.
 type FileReader struct {
 	filePath string
 	file     *os.File
 }
 
+// NewWriter возвращает новый экземпляр файлового писателя.
 func (w *FileWriter) NewWriter() (*FileWriter, error) {
 	file, err := os.OpenFile(w.filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -108,6 +119,7 @@ func (w *FileWriter) NewWriter() (*FileWriter, error) {
 	return &FileWriter{file: file, encoder: json.NewEncoder(file)}, err
 }
 
+// WriteShortURL записать сокращенный URL в файл.
 func (w *FileWriter) WriteShortURL(value models.AllURLs) error {
 	data, err := json.Marshal(&value)
 	if err != nil {
@@ -119,10 +131,12 @@ func (w *FileWriter) WriteShortURL(value models.AllURLs) error {
 	return err
 }
 
+// Close закрыть файл.
 func (w *FileWriter) Close() error {
 	return w.file.Close()
 }
 
+// NewReader возвращает новый экземпляр файлового читателя.
 func (r *FileReader) NewReader() (*FileReader, error) {
 	file, err := os.OpenFile(r.filePath, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -131,6 +145,7 @@ func (r *FileReader) NewReader() (*FileReader, error) {
 	return &FileReader{file: file}, nil
 }
 
+// ReadShortURL читает сокращенный URL в файле.
 func (r *FileReader) ReadShortURL() (*models.AllURLs, error) {
 	var fileString models.AllURLs
 
@@ -146,10 +161,12 @@ func (r *FileReader) ReadShortURL() (*models.AllURLs, error) {
 	return &fileString, nil
 }
 
+// Close закрывает файл
 func (r *FileReader) Close() error {
 	return r.file.Close()
 }
 
+// FindOriginalURL найти оригинальный URL в файле по сокращенному
 func (r *FileReader) FindOriginalURL(shortURL string) (*models.AllURLs, error) {
 	var fileString models.AllURLs
 
