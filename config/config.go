@@ -19,6 +19,7 @@ type Config struct {
 	FileStoragePath string
 	DataBaseDSN     string
 	JWTSecretKey    string
+	Pprof string
 }
 
 type Server struct {
@@ -36,6 +37,7 @@ type ENVValue struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	DataBaseDSN     string `env:"DATABASE_DSN"`
 	JWTSecretKey    string `env:"JWTSecretKey"`
+	Pprof string `env:"PPROF"`
 }
 
 type cliFlag struct {
@@ -44,6 +46,7 @@ type cliFlag struct {
 	flagShorten  string
 	flagFilePath string
 	flagDSN      string
+	flagPprof string
 }
 
 func GetConfig() (*Config, error) {
@@ -53,6 +56,7 @@ func GetConfig() (*Config, error) {
 	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
 	flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
 	flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
+	flag.StringVar(&cliFlags.flagPprof, "p", "", "pprof address")
 	flag.Parse()
 	fmt.Println(cliFlags)
 
@@ -76,6 +80,7 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
 		FileStoragePath: calcVal(envVal.FileStoragePath, cliFlags.flagFilePath, defaultFileStoragePath),
 		DataBaseDSN:     calcVal(envVal.DataBaseDSN, cliFlags.flagDSN, ""),
 		JWTSecretKey:    calcVal(envVal.JWTSecretKey, cliFlags.flagJWT, deafultSecretKey),
+		Pprof: calcVal(envVal.Pprof, cliFlags.flagPprof, ""),
 	}
 
 }

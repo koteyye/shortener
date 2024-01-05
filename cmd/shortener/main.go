@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/handlers"
@@ -10,7 +12,9 @@ import (
 	"github.com/koteyye/shortener/internal/app/storage"
 	"github.com/koteyye/shortener/server"
 	"go.uber.org/zap"
-	"time"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	_ "github.com/lib/pq"
 )
@@ -51,6 +55,13 @@ func main() {
 	}
 	services := service.NewService(storages, cfg.Shortener, &log)
 	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey)
+
+	if cfg.Pprof != "" {
+		go func() {
+			// Запускаем HTTP на отедльном порту для pprof
+			http.ListenAndServe(cfg.Pprof, nil)
+		}()
+	}
 
 	restServer := new(server.Server)
 	if err := restServer.Run(cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
