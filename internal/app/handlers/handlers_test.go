@@ -14,7 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/koteyye/shortener/internal/app/models"
-	mock_service "github.com/koteyye/shortener/internal/app/service/mocks"
+	mockservice "github.com/koteyye/shortener/internal/app/service/mocks"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -25,11 +25,11 @@ const (
 )
 
 // testInitHandler инициализация тестового обработчика
-func testInitHandler(t *testing.T) (*Handlers, *mock_service.MockShortener) {
+func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockShortener) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 
-	repo := mock_service.NewMockShortener(c)
+	repo := mockservice.NewMockShortener(c)
 	service := service.Service{Shortener: repo}
 
 	logger, err := zap.NewDevelopment()
@@ -146,7 +146,7 @@ func TestHandlers_Batch(t *testing.T) {
 }
 
 func TestHandlers_GetURLsByUser(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockShortener, userID string)
+	type mockBehavior func(r *mockservice.MockShortener, userID string)
 	tests := []struct {
 		name                 string
 		mockBehavior         mockBehavior
@@ -155,7 +155,7 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 	}{
 		{
 			name: "success",
-			mockBehavior: func(r *mock_service.MockShortener, userID string) {
+			mockBehavior: func(r *mockservice.MockShortener, userID string) {
 				r.EXPECT().GetURLByUser(gomock.Any(), userID).Return([]*models.AllURLs{
 					{
 						ShortURL:    "http://localhost:8080/iwvwpvwepofpwoe",
@@ -168,7 +168,7 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 		},
 		{
 			name: "no content",
-			mockBehavior: func(r *mock_service.MockShortener, userID string) {
+			mockBehavior: func(r *mockservice.MockShortener, userID string) {
 				r.EXPECT().GetURLByUser(gomock.Any(), userID).Return(nil, sql.ErrNoRows)
 			},
 			expectedStatusCode: 204,
@@ -186,7 +186,7 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 			userID := uuid.New()
 			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
-			repo := mock_service.NewMockShortener(c)
+			repo := mockservice.NewMockShortener(c)
 			if test.mockBehavior != nil {
 				test.mockBehavior(repo, userID.String())
 			}
@@ -205,7 +205,7 @@ func TestHandlers_GetURLsByUser(t *testing.T) {
 }
 
 func TestHandlers_JSONShortenURL(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockShortener, url string)
+	type mockBehavior func(r *mockservice.MockShortener, url string)
 	tests := []struct {
 		name                 string
 		inputBody            io.Reader
@@ -218,7 +218,7 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 			name:      "success",
 			inputBody: strings.NewReader(`{"url": "http://yandex.ru"}`),
 			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mock_service.MockShortener, url string) {
+			mockBehavior: func(r *mockservice.MockShortener, url string) {
 				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("http://localhost:8080/3g2gf2f2", nil)
 			},
 			expectedStatusCode:   201,
@@ -228,7 +228,7 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 			name:      "conflict",
 			inputBody: strings.NewReader(`{"url": "http://yandex.ru"}`),
 			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mock_service.MockShortener, url string) {
+			mockBehavior: func(r *mockservice.MockShortener, url string) {
 				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("", &pq.Error{Code: models.PqDuplicateErr})
 			},
 			expectedStatusCode:   409,
@@ -247,7 +247,7 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 			userID := uuid.New()
 			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
-			repo := mock_service.NewMockShortener(c)
+			repo := mockservice.NewMockShortener(c)
 			if test.mockBehavior != nil {
 				test.mockBehavior(repo, test.inputURL)
 			}
@@ -269,7 +269,7 @@ func TestHandlers_JSONShortenURL(t *testing.T) {
 }
 
 func TestHandlers_ShortenURL(t *testing.T) {
-	type mockBehavior func(r *mock_service.MockShortener, url string)
+	type mockBehavior func(r *mockservice.MockShortener, url string)
 	tests := []struct {
 		name                 string
 		inputBody            io.Reader
@@ -282,7 +282,7 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			name:      "success",
 			inputBody: strings.NewReader(`http://yandex.ru`),
 			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mock_service.MockShortener, url string) {
+			mockBehavior: func(r *mockservice.MockShortener, url string) {
 				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("http://localhost:8080/3g2gf2f2", nil)
 			},
 			expectedStatusCode:   201,
@@ -292,7 +292,7 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			name:      "conflict",
 			inputBody: strings.NewReader(`http://yandex.ru`),
 			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mock_service.MockShortener, url string) {
+			mockBehavior: func(r *mockservice.MockShortener, url string) {
 				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("", &pq.Error{Code: models.PqDuplicateErr})
 			},
 			expectedStatusCode:   409,
@@ -310,7 +310,7 @@ func TestHandlers_ShortenURL(t *testing.T) {
 			userID := uuid.New()
 			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
-			repo := mock_service.NewMockShortener(c)
+			repo := mockservice.NewMockShortener(c)
 			if test.mockBehavior != nil {
 				test.mockBehavior(repo, test.inputURL)
 			}
