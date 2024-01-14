@@ -6,6 +6,8 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// OsExitCheckAnalyzer прямое использование os.Exit
+// в функции main
 var OsExitCheckAnalyzer = &analysis.Analyzer{
 	Name: "exitcheck",
 	Doc:  "check the use os.exit in main func",
