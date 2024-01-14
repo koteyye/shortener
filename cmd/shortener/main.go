@@ -20,8 +20,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var (
+	buildVersion = "N/A" // Версия сборки.
+	buildDate = "N/A" // Дата сборки.
+	buildCommit = "N/A" // Последний коммит.
+)
+
 func main() {
 	ctx := context.Background()
+
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
 	logger, err := zap.NewDevelopment()
 	if err != nil {
