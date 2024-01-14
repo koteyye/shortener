@@ -22,8 +22,8 @@ import (
 
 var (
 	buildVersion = "N/A" // Версия сборки.
-	buildDate = "N/A" // Дата сборки.
-	buildCommit = "N/A" // Последний коммит.
+	buildDate    = "N/A" // Дата сборки.
+	buildCommit  = "N/A" // Последний коммит.
 )
 
 func main() {
