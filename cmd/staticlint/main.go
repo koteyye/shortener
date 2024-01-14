@@ -1,8 +1,6 @@
 package main
 
 import (
-	errcheckanalyzer "github.com/koteyye/shortener/cmd/staticlint/errcheckanalyzer"
-	"github.com/koteyye/shortener/cmd/staticlint/exitchekanalyzer"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/assign"
@@ -11,6 +9,9 @@ import (
 	"golang.org/x/tools/go/analysis/passes/shift"
 	"golang.org/x/tools/go/analysis/passes/structtag"
 	"honnef.co/go/tools/staticcheck"
+
+	errcheckanalyzer "github.com/koteyye/shortener/cmd/staticlint/errcheckanalyzer"
+	"github.com/koteyye/shortener/cmd/staticlint/exitchekanalyzer"
 )
 
 var excludeStyleChecks = map[string]struct{}{

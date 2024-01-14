@@ -3,8 +3,9 @@ package exitchekanalyzer_test
 import (
 	"testing"
 
-	"github.com/koteyye/shortener/cmd/staticlint/exitchekanalyzer"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	"github.com/koteyye/shortener/cmd/staticlint/exitchekanalyzer"
 )
 
 func TestExitCheck(t *testing.T) {
