@@ -15,6 +15,10 @@ type errorJSON struct {
 	Message string `json:"Message"`
 }
 
+type resultJSON struct {
+	Result string `json:"Result"`
+}
+
 func mapToStringResponse(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
@@ -22,7 +26,7 @@ func mapToStringResponse(w http.ResponseWriter, statusCode int, message string) 
 }
 
 func mapShortURLToJSONResponse(w http.ResponseWriter, statusCode int, result string) {
-	rawResponse, err := json.Marshal(&errorJSON{Message: result})
+	rawResponse, err := json.Marshal(&resultJSON{Result: result})
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
 	}
