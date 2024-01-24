@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+
 	"github.com/lib/pq"
 )
 

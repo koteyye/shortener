@@ -1,9 +1,10 @@
 package service
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
-	"go.uber.org/zap"
 )
 
 // Serivce структура сервисного слоя

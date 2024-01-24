@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
-	"github.com/koteyye/shortener/internal/app/models"
 	"go.uber.org/zap"
+
+	"github.com/koteyye/shortener/internal/app/models"
 )
 
 // URLStorage интерфейс хранилища.

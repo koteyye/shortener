@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+
 	"github.com/caarlos0/env/v6"
 )
 
@@ -21,6 +22,7 @@ type Config struct {
 	DataBaseDSN     string
 	JWTSecretKey    string
 	Pprof           string
+	EnbaleHTTPS     bool
 }
 
 // Server сервер конфигурации сервиса.
@@ -42,6 +44,7 @@ type ENVValue struct {
 	DataBaseDSN     string `env:"DATABASE_DSN"`
 	JWTSecretKey    string `env:"JWTSecretKey"`
 	Pprof           string `env:"PPROF"`
+	EnbaleHTTPS     bool   `env:"ENABLE_HTTPS"`
 }
 
 // cliFlag флаги командной строки.
@@ -52,6 +55,7 @@ type cliFlag struct {
 	flagFilePath string
 	flagDSN      string
 	flagPprof    string
+	flagHTTPS    bool
 }
 
 // GetConfig получение конфигурации.
@@ -63,6 +67,7 @@ func GetConfig() (*Config, error) {
 	flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
 	flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
 	flag.StringVar(&cliFlags.flagPprof, "p", "", "pprof address")
+	flag.BoolVar(&cliFlags.flagHTTPS, "s", false, "https")
 	flag.Parse()
 	fmt.Println(cliFlags)
 
@@ -87,6 +92,7 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag) *Config {
 		DataBaseDSN:     calcVal(envVal.DataBaseDSN, cliFlags.flagDSN, ""),
 		JWTSecretKey:    calcVal(envVal.JWTSecretKey, cliFlags.flagJWT, deafultSecretKey),
 		Pprof:           calcVal(envVal.Pprof, cliFlags.flagPprof, ""),
+		EnbaleHTTPS:     calcHTTPS(envVal.EnbaleHTTPS, cliFlags.flagHTTPS),
 	}
 
 }
@@ -99,4 +105,14 @@ func calcVal(env string, fl string, def string) string {
 		return fl
 	}
 	return def
+}
+
+func calcHTTPS(env bool, fl bool) bool {
+	if env {
+		return true
+	}
+	if fl {
+		return true
+	}
+	return false
 }

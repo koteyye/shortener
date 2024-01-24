@@ -3,8 +3,9 @@ package handlers
 import (
 	"compress/gzip"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"net/http"
+
+	"golang.org/x/exp/slices"
 )
 
 // Compress сжатие ответа.

@@ -13,16 +13,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/service"
-	"github.com/lib/pq"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/koteyye/shortener/internal/app/models"
-	mockservice "github.com/koteyye/shortener/internal/app/storage/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+
+	"github.com/koteyye/shortener/internal/app/models"
+	mockservice "github.com/koteyye/shortener/internal/app/storage/mocks"
 )
 
 const (

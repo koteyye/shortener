@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/koteyye/shortener/internal/app/models"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/koteyye/shortener/internal/app/models"
 
 	"github.com/golang-jwt/jwt/v4"
 )

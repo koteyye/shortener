@@ -26,3 +26,6 @@ cmd/client
 
 .gitignore
 shortenertestbeta
+shortenertest
+cert.pem
+key.pem

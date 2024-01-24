@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/koteyye/shortener/internal/app/models"
 	"go.uber.org/zap"
+
+	"github.com/koteyye/shortener/internal/app/models"
 )
 
 // DBStorage структура БД.

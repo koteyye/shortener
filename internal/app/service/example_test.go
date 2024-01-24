@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/storage"
-	"go.uber.org/zap"
 )
 
 func ExampleService_AddShortURL() {

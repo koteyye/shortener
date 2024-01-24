@@ -73,7 +73,7 @@ func main() {
 	}
 
 	restServer := new(server.Server)
-	if err := restServer.Run(cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
+	if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
 		log.Fatalw(err.Error(), "event", "start server")
 	}
 

@@ -2,8 +2,9 @@ package storage
 
 import (
 	"context"
-	"github.com/koteyye/shortener/internal/app/models"
 	"sync"
+
+	"github.com/koteyye/shortener/internal/app/models"
 )
 
 // URLMap структура мок-хранилища.
