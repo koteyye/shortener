@@ -7,32 +7,17 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/models"
-	"github.com/koteyye/shortener/internal/app/storage"
-	"go.uber.org/zap"
 )
 
-// ShortenerService структура сервисного слоя сокращателя.
-type ShortenerService struct {
-	storage   storage.URLStorage
-	shortener *config.Shortener
-	logger    *zap.SugaredLogger
-}
-
-// NewShortenerService возвращает новый экземпляр сервисного слоя сокращателя.
-func NewShortenerService(storage storage.URLStorage, shortener *config.Shortener, logger *zap.SugaredLogger) *ShortenerService {
-	return &ShortenerService{storage: storage, shortener: shortener, logger: logger}
-}
-
 // Batch сокращение множества URL.
-func (s ShortenerService) Batch(ctx context.Context, originalList []*models.OriginURLList, userID string) ([]*models.URLList, error) {
+func (s Service) Batch(ctx context.Context, originalList []*models.URLList, userID string) ([]*models.URLList, error) {
 	var urllist []*models.URLList
 	for _, origin := range originalList {
-		short, err := s.AddShortURL(ctx, origin.OriginURL, userID)
+		short, err := s.AddShortURL(ctx, origin.URL, userID)
 		if err != nil {
 			if models.MapConflict(err) {
-				shortURL, err := s.GetShortURLFromOriginal(ctx, origin.OriginURL)
+				shortURL, err := s.GetShortURLFromOriginal(ctx, origin.URL)
 				if err != nil {
 					return nil, fmt.Errorf("ошибка при получении задублированного url: %v", err)
 				}
@@ -47,12 +32,12 @@ func (s ShortenerService) Batch(ctx context.Context, originalList []*models.Orig
 }
 
 // GetDBPing проверка подключения к БД.
-func (s ShortenerService) GetDBPing(ctx context.Context) error {
+func (s Service) GetDBPing(ctx context.Context) error {
 	return s.storage.GetDBPing(ctx)
 }
 
 // GetOriginURL получение оригинального URL.
-func (s ShortenerService) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
+func (s Service) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
 	res, err := s.storage.GetURL(ctx, shortURL)
 	if err != nil {
 		return "", err
@@ -60,11 +45,11 @@ func (s ShortenerService) GetOriginURL(ctx context.Context, shortURL string) (st
 	if res.IsDeleted {
 		return "", models.ErrDeleted
 	}
-	return res.OriginalURL, nil
+	return res.URL, nil
 }
 
 // AddShortURL сокращение оригинального URL.
-func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string, userID string) (string, error) {
+func (s Service) AddShortURL(ctx context.Context, urlVal string, userID string) (string, error) {
 	res := generateUnitKey()
 	if err := s.storage.AddURL(ctx, res, urlVal, userID); err != nil {
 		return "", fmt.Errorf("add url: %w", err)
@@ -77,12 +62,12 @@ func (s ShortenerService) AddShortURL(ctx context.Context, urlVal string, userID
 }
 
 // GetShortURLFromOriginal получение сокращенного URL по оригинальному.
-func (s ShortenerService) GetShortURLFromOriginal(ctx context.Context, urlVal string) (string, error) {
+func (s Service) GetShortURLFromOriginal(ctx context.Context, urlVal string) (string, error) {
 	short, err := s.storage.GetShortURL(ctx, urlVal)
 	if err != nil {
 		return "", err
 	}
-	urlRes, err := url.JoinPath(s.shortener.Listen, "/", short)
+	urlRes, err := url.JoinPath(s.shortener.Listen, short)
 	if err != nil {
 		return "", err
 	}
@@ -90,7 +75,7 @@ func (s ShortenerService) GetShortURLFromOriginal(ctx context.Context, urlVal st
 }
 
 // GetURLByUser получение списка URL по текущему пользователю.
-func (s ShortenerService) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
+func (s Service) GetURLByUser(ctx context.Context, userID string) ([]*models.URLList, error) {
 	allURLs, err := s.storage.GetURLByUser(ctx, userID)
 	for _, urlItem := range allURLs {
 		finalURL, err := url.JoinPath(s.shortener.Listen, "/", urlItem.ShortURL)
@@ -103,22 +88,15 @@ func (s ShortenerService) GetURLByUser(ctx context.Context, userID string) ([]*m
 }
 
 // DeleteURLByUser удаление URL по списку
-func (s ShortenerService) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
-
+func (s Service) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
 	doneCh := make(chan struct{})
-	inputCh := add(doneCh, urls)
 
 	urlListByUser, err := s.GetURLByUser(ctx, userID)
 	if err != nil {
 		s.logger.Infow(err.Error(), "event:", "get url by user")
 	}
-	validatedChanel := validateUser(doneCh, inputCh, urlListByUser)
-
-	//делаем 10 каналов
-	chanels := fanOut(doneCh, validatedChanel, urlListByUser)
-
-	//объединяем в 1 канал
-	urlCh := fanIn(doneCh, chanels...)
+	validatedChanel := validateUser(doneCh, urlListByUser, urls)
+	urlCh := fanIn(doneCh, validatedChanel)
 
 	s.storage.DeleteURLByUser(ctx, urlCh)
 }

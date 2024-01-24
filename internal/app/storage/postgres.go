@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/koteyye/shortener/internal/app/models"
 	"go.uber.org/zap"
-	"time"
 )
 
 // DBStorage структура БД.
@@ -46,8 +47,8 @@ func initDBTableShortURL(ctx context.Context, db *sqlx.DB) {
 }
 
 // GetURLByUser получить список URL, созданных текущим пользователем.
-func (d *DBStorage) GetURLByUser(ctx context.Context, userID string) ([]*models.AllURLs, error) {
-	var result []*models.AllURLs
+func (d *DBStorage) GetURLByUser(ctx context.Context, userID string) ([]*models.URLList, error) {
+	var result []*models.URLList
 	err := d.db.SelectContext(ctx, &result, "select originalURL, shortURL from shorturl where user_created = $1", userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -68,12 +69,12 @@ func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL str
 }
 
 // GetURL получить URL из базы.
-func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (*models.URL, error) {
-	var result models.URL
+func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (*models.SingleURL, error) {
+	var result models.SingleURL
 	err := d.db.GetContext(ctx, &result, "select shorturl, originalurl, is_deleted from shorturl where shorturl = $1", shortURL)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return &models.URL{}, models.ErrNotFound
+			return &models.SingleURL{}, models.ErrNotFound
 		}
 		return nil, fmt.Errorf("не удалось получить сокращенный url из бд: %w", err)
 	}

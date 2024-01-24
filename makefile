@@ -42,7 +42,7 @@ build:
 .PHONY: autotest
 autotest: build
 	@./shortenertestbeta \
-		-test.v -test.run=^TestIteration18 \
+		-test.v -test.run=^TestIteration1 \
 		-binary-path=cmd/shortener/shortener \
 		-server-host=localhost \
 		-server-port=8081 \

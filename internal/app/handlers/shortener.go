@@ -83,10 +83,11 @@ func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 
 	list, err := h.services.Batch(ctx, input, userID)
 	if err != nil {
-		mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
-		return
+		if !errors.Is(err, models.ErrDuplicate) {
+			mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
-
 	if !models.MapBatchConflict(list) {
 		mapURLListToJSONResponse(res, http.StatusConflict, list)
 		return
@@ -217,7 +218,7 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 
 	urls, _ := mapRequestDeleteByUser(r)
 
-	go h.services.Shortener.DeleteURLByUser(context.Background(), urls, userID)
+	go h.services.DeleteURLByUser(context.Background(), urls, userID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

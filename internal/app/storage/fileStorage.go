@@ -30,7 +30,7 @@ func (f *FileStorage) DeleteURLByUser(_ context.Context, _ chan string) error {
 }
 
 // GetURLByUser получение URL текущего пользователя (не поддерживается).
-func (f *FileStorage) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
+func (f *FileStorage) GetURLByUser(_ context.Context, _ string) ([]*models.URLList, error) {
 	return nil, models.ErrFileNotSupported
 }
 
@@ -61,7 +61,7 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) er
 	if readFile == nil {
 		id = 1
 	} else {
-		id = readFile.ID + 1
+		id = readFile.Number + 1
 	}
 
 	writer, err := f.fileWriter.NewWriter()
@@ -71,10 +71,10 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) er
 	}
 	defer writer.Close()
 
-	err = writer.WriteShortURL(models.AllURLs{
-		ID:          id,
-		ShortURL:    s,
-		OriginalURL: k,
+	err = writer.WriteShortURL(models.URLList{
+		Number:   id,
+		ShortURL: s,
+		URL:      k,
 	})
 	if err != nil {
 		return fmt.Errorf("err write shortURL: %w", err)
@@ -83,18 +83,18 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) er
 }
 
 // GetURL получение URL из файлового хранилища.
-func (f *FileStorage) GetURL(_ context.Context, k string) (*models.URL, error) {
+func (f *FileStorage) GetURL(_ context.Context, k string) (*models.SingleURL, error) {
 	reader, err := f.fileReader.NewReader()
 	if err != nil {
-		return &models.URL{}, fmt.Errorf("err reader: %w", err)
+		return &models.SingleURL{}, fmt.Errorf("err reader: %w", err)
 	}
 	defer reader.Close()
 
 	readFile, err := reader.FindOriginalURL(k)
 	if err != nil {
-		return &models.URL{}, fmt.Errorf("err read file: %w", err)
+		return &models.SingleURL{}, fmt.Errorf("err read file: %w", err)
 	}
-	return &models.URL{OriginalURL: readFile.OriginalURL}, nil
+	return &models.SingleURL{URL: readFile.URL}, nil
 }
 
 // FileWriter структура файлового писателя.
@@ -120,7 +120,7 @@ func (w *FileWriter) NewWriter() (*FileWriter, error) {
 }
 
 // WriteShortURL записать сокращенный URL в файл.
-func (w *FileWriter) WriteShortURL(value models.AllURLs) error {
+func (w *FileWriter) WriteShortURL(value models.URLList) error {
 	data, err := json.Marshal(&value)
 	if err != nil {
 		return err
@@ -146,8 +146,8 @@ func (r *FileReader) NewReader() (*FileReader, error) {
 }
 
 // ReadShortURL читает сокращенный URL в файле.
-func (r *FileReader) ReadShortURL() (*models.AllURLs, error) {
-	var fileString models.AllURLs
+func (r *FileReader) ReadShortURL() (*models.URLList, error) {
+	var fileString models.URLList
 
 	scanner := bufio.NewScanner(r.file)
 
@@ -167,8 +167,8 @@ func (r *FileReader) Close() error {
 }
 
 // FindOriginalURL найти оригинальный URL в файле по сокращенному
-func (r *FileReader) FindOriginalURL(shortURL string) (*models.AllURLs, error) {
-	var fileString models.AllURLs
+func (r *FileReader) FindOriginalURL(shortURL string) (*models.URLList, error) {
+	var fileString models.URLList
 
 	scanner := bufio.NewScanner(r.file)
 

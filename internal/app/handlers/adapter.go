@@ -30,8 +30,8 @@ func mapRequestShortenURL(r *http.Request) (string, error) {
 	return strReqBody, nil
 }
 
-func mapRequestJSONShortenURL(r *http.Request) (*models.OriginalURL, error) {
-	var input *models.OriginalURL
+func mapRequestJSONShortenURL(r *http.Request) (*models.SingleURL, error) {
+	var input *models.SingleURL
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("невозможно прочитать запрос: %v", err)
@@ -46,8 +46,8 @@ func mapRequestJSONShortenURL(r *http.Request) (*models.OriginalURL, error) {
 	return input, nil
 }
 
-func mapRequestBatch(r *http.Request) ([]*models.OriginURLList, error) {
-	var input []*models.OriginURLList
+func mapRequestBatch(r *http.Request) ([]*models.URLList, error) {
+	var input []*models.URLList
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("невозможно прочитать запрос: %v", err)
@@ -61,7 +61,7 @@ func mapRequestBatch(r *http.Request) ([]*models.OriginURLList, error) {
 			return nil, err
 		}
 		item.ID = strings.TrimSpace(item.ID)
-		item.OriginURL = strings.TrimSpace(item.OriginURL)
+		item.URL = strings.TrimSpace(item.URL)
 	}
 	return input, nil
 }

@@ -17,7 +17,7 @@ func NewURLMap() *URLMap {
 }
 
 // GetURLByUser возвращает список URL по текущему пользователю (не поддерживается).
-func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.AllURLs, error) {
+func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.URLList, error) {
 	return nil, models.ErrMockNotSupported
 }
 
@@ -43,12 +43,12 @@ func (u *URLMap) AddURL(_ context.Context, k, s string, _ string) error {
 }
 
 // GetURL получить сокращенный URL из хранилища.
-func (u *URLMap) GetURL(_ context.Context, k string) (*models.URL, error) {
+func (u *URLMap) GetURL(_ context.Context, k string) (*models.SingleURL, error) {
 
 	url, ok := u.storage.Load(k)
 	if !ok {
-		return &models.URL{}, models.ErrNotFound
+		return &models.SingleURL{}, models.ErrNotFound
 	}
-	return &models.URL{OriginalURL: url.(string)}, nil
+	return &models.SingleURL{URL: url.(string)}, nil
 
 }

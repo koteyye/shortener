@@ -17,11 +17,12 @@ type errorJSON struct {
 
 func mapToStringResponse(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(message))
 }
 
 func mapShortURLToJSONResponse(w http.ResponseWriter, statusCode int, result string) {
-	rawResponse, err := json.Marshal(&models.ShortURL{Result: result})
+	rawResponse, err := json.Marshal(&errorJSON{Message: result})
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
 	}
@@ -42,7 +43,7 @@ func mapErrorToResponse(w http.ResponseWriter, r *http.Request, statusCode int, 
 		w.Write(rawResponse)
 		return
 	}
-	w.Header().Add("Content-Type", "ext/plain; charset=utf-8")
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(msg))
 }
 
@@ -66,7 +67,7 @@ func mapURLListToJSONResponse(w http.ResponseWriter, statusCode int, result []*m
 	w.Write(rawResponse)
 }
 
-func mapAllURLsToJSONResponse(w http.ResponseWriter, statusCode int, result []*models.AllURLs) {
+func mapAllURLsToJSONResponse(w http.ResponseWriter, statusCode int, result []*models.URLList) {
 	rawResponse, err := json.Marshal(result)
 	if err != nil {
 		mapToStringResponse(w, http.StatusBadRequest, err.Error())
