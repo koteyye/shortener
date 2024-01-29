@@ -85,6 +85,7 @@ func (c *fileConfig) ConfigFromFile(filepath string) error {
 	return nil
 }
 
+// GetConfig получить конфигурацию приложения
 func GetConfig() (*Config, error) {
 	cliFlags := &cliFlag{}
 	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
