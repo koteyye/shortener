@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -20,8 +22,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	shutdownTimeout = 5 * time.Second
+)
+
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -64,10 +71,7 @@ func main() {
 		}()
 	}
 
-	restServer := new(server.Server)
-	if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil {
-		log.Fatalw(err.Error(), "event", "start server")
-	}
+	runServer(ctx, cfg, handler, log)
 
 }
 
@@ -86,4 +90,25 @@ func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	}
 
 	return db, nil
+}
+
+func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handlers, log zap.SugaredLogger) error {
+	restServer := new(server.Server)
+	go func() {
+		if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil && err != http.ErrServerClosed {
+			log.Fatalw(err.Error(), "event", "start server")
+		}
+	}()
+
+	<-ctx.Done()
+
+	log.Info("shutting down server")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := restServer.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("shutdown: %w", err)
+	}
+
+	return nil
 }
