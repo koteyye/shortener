@@ -16,7 +16,7 @@ const (
 
 func BenchmarkAddURL(b *testing.B) {
 	repo := storage.NewURLMap()
-	s := &Service{storage: repo, shortener: &config.Shortener{Listen: "localhost:8081"}}
+	s := &Service{storage: repo, shortener: &config.Shortener{Listen: testListenURL}}
 
 	for i := 0; i < b.N; i++ {
 		ctx := context.Background()
@@ -26,7 +26,7 @@ func BenchmarkAddURL(b *testing.B) {
 
 func BenchmarkGetURL(b *testing.B) {
 	repo := storage.NewURLMap()
-	s := &Service{storage: repo, shortener: &config.Shortener{Listen: "localhost:8081"}}
+	s := &Service{storage: repo, shortener: &config.Shortener{Listen: testListenURL}}
 
 	for i := 0; i < b.N; i++ {
 		ctx := context.Background()
