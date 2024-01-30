@@ -39,6 +39,22 @@ func TestConfig_GetConfig(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, wantCfg, cfg)
 		})
+		t.Run("nothing", func(t *testing.T) {
+			cfg, err := GetConfig()
+			wantCfg := &Config{
+				Server: &Server{
+					Listen: defaultServer,
+					BaseURL: "/",
+				},
+				Shortener: &Shortener{
+					Listen: defaultShortenerHost,
+				},
+				FileStoragePath: defaultFileStoragePath,
+				JWTSecretKey: deafultSecretKey,
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, wantCfg, cfg)
+		})
 	})
 
 }

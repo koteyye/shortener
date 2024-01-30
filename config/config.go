@@ -62,6 +62,49 @@ type cliFlag struct {
 	flagConfig   string
 }
 
+func initFlags() *cliFlag {
+	cliFlags := &cliFlag{}
+	if isFlagPassed("a") {
+		flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
+	}
+	if isFlagPassed("b") {
+		flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
+	}
+	if isFlagPassed("f") {
+		flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
+	}
+	if isFlagPassed("d") {
+		flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
+	}
+	if isFlagPassed("j") {
+		flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
+	}
+	if isFlagPassed("p") {
+		flag.StringVar(&cliFlags.flagPprof, "p", "", "pprof address")
+	}
+	if isFlagPassed("s") {
+		flag.BoolVar(&cliFlags.flagHTTPS, "s", false, "https")
+	}
+	if isFlagPassed("c") {
+		flag.StringVar(&cliFlags.flagConfig, "c", "", "config path")
+	}
+	if isFlagPassed("config") {
+		flag.StringVar(&cliFlags.flagConfig, "config", "", "config path")
+	}
+	flag.Parse()
+	return cliFlags
+}
+
+func isFlagPassed(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}
+
 type fileConfig struct {
 	Server          string `json:"server_address"`
 	Shortener       string `json:"base_url"`
@@ -87,17 +130,7 @@ func (c *fileConfig) ConfigFromFile(filepath string) error {
 
 // GetConfig получить конфигурацию приложения
 func GetConfig() (*Config, error) {
-	cliFlags := &cliFlag{}
-	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
-	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
-	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
-	flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
-	flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
-	flag.StringVar(&cliFlags.flagPprof, "p", "", "pprof address")
-	flag.BoolVar(&cliFlags.flagHTTPS, "s", false, "https")
-	flag.StringVar(&cliFlags.flagConfig, "c", "", "config path")
-	flag.StringVar(&cliFlags.flagConfig, "config", "", "config path")
-	flag.Parse()
+	cliFlags := initFlags()
 
 	var envVal ENVValue
 	if err := env.Parse(&envVal); err != nil {
