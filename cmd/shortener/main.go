@@ -26,9 +26,17 @@ const (
 	shutdownTimeout = 5 * time.Second
 )
 
+var (
+	buildVersion = "N/A" // Версия сборки.
+	buildDate    = "N/A" // Дата сборки.
+	buildCommit  = "N/A" // Последний коммит.
+)
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
 	logger, err := zap.NewDevelopment()
 	if err != nil {
