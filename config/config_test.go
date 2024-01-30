@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,6 +45,30 @@ func TestConfig_GetConfig(t *testing.T) {
 			wantCfg := &Config{
 				Server: &Server{
 					Listen: defaultServer,
+					BaseURL: "/",
+				},
+				Shortener: &Shortener{
+					Listen: defaultShortenerHost,
+				},
+				FileStoragePath: defaultFileStoragePath,
+				JWTSecretKey: deafultSecretKey,
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, wantCfg, cfg)
+		})
+		t.Run("flags", func(t *testing.T) {
+			oldArg := os.Args
+			defer func() {
+				os.Args = oldArg
+			}()
+
+			args := []string{"-a", "localhost:8083"}
+			os.Args = args
+
+			cfg, err := GetConfig()
+			wantCfg := &Config{
+				Server: &Server{
+					Listen: "localhost:8083",
 					BaseURL: "/",
 				},
 				Shortener: &Shortener{
