@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -100,6 +101,7 @@ func (d *DBStorage) GetShortURL(ctx context.Context, originalURL string) (string
 func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls []string) error {
 	_, err := d.db.DB.ExecContext(ctx, "update shorturl set is_deleted = true where shorturl in ($1)", pq.Array(urls))
 	if err != nil {
+		slog.Info(err.Error())
 		return fmt.Errorf("ошибка при обновлении записей с shorturl")
 	}
 	return nil

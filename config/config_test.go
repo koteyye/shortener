@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -58,12 +59,12 @@ func TestConfig_GetConfig(t *testing.T) {
 		})
 		t.Run("flags", func(t *testing.T) {
 			oldArg := os.Args
+			oldCommandLine := flag.CommandLine
 			defer func() {
 				os.Args = oldArg
+				flag.CommandLine = oldCommandLine
 			}()
-
-			args := []string{"-a", "localhost:8083"}
-			os.Args = args
+			flag.CommandLine = flag.NewFlagSet(`test`, flag.ExitOnError)
 
 			cfg, err := GetConfig()
 			wantCfg := &Config{

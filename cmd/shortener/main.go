@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/deleter"
@@ -36,6 +37,7 @@ var (
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	g, gCtx := errgroup.WithContext(ctx)
 
 	fmt.Printf("Build version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
 
@@ -70,19 +72,31 @@ func main() {
 	if err != nil {
 		log.Fatalw(err.Error(), "event", "init storage")
 	}
-	worker := deleter.StartDeleter(storages, &log)
+	worker := deleter.InitDeleter(storages, &log)
 	services := service.NewService(storages, cfg.Shortener, &log)
 	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, worker)
 
 	if cfg.Pprof != "" {
-		go func() {
-			// Запускаем HTTP на отедльном порту для pprof
-			http.ListenAndServe(cfg.Pprof, nil)
-		}()
+		g.Go(func() error {
+			if startErr := http.ListenAndServe(cfg.Pprof, nil); startErr != nil && !errors.Is(startErr, http.ErrServerClosed) {
+				log.Fatalf("cant start server: %s", startErr)
+			}
+			return nil
+		})
 	}
 
-	runServer(ctx, cfg, handler, log, worker)
+	g.Go(func() error {
+		return runServer(gCtx, cfg, handler, log, worker)
+	})
 
+	g.Go(func() error {
+		worker.StartWorker(gCtx)
+		return nil
+	})
+
+	if err = g.Wait(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
@@ -104,19 +118,12 @@ func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 
 func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handlers, log zap.SugaredLogger, worker *deleter.Deleter) error {
 	restServer := new(server.Server)
-	go func() {
-		if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil && err != http.ErrServerClosed {
-			log.Fatalw(err.Error(), "event", "start server")
-		}
-	}()
-
-	<-ctx.Done()
-
+	if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil && err != http.ErrServerClosed {
+		log.Fatalw(err.Error(), "event", "start server")
+	}
 	log.Info("shutting down server")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-
-	worker.Close()
 
 	if err := restServer.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown: %w", err)

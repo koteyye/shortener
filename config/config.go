@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/caarlos0/env/v6"
 )
@@ -96,13 +97,7 @@ func initFlags() *cliFlag {
 }
 
 func isFlagPassed(name string) bool {
-	found := false
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == name {
-			found = true
-		}
-	})
-	return found
+	return slices.Contains(os.Args, "-"+name)
 }
 
 type fileConfig struct {

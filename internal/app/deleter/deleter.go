@@ -17,22 +17,16 @@ const (
 
 // Deleter воркер выполняющий асинхронное удаление
 type Deleter struct {
-	URL chan string
-	once sync.Once
-	Counter *Counter
+	URL     chan string
+	ticker   *time.Ticker
 	storage storage.URLStorage
-	logger *zap.SugaredLogger
-	termCh chan struct{}
-	wg *sync.WaitGroup
+	logger  *zap.SugaredLogger
+	mutex   sync.Mutex
 }
 
 // StartDeleter запускает воркер
-func StartDeleter(storage storage.URLStorage, logger *zap.SugaredLogger) *Deleter {
-	urls := make(chan string)
-	cnt := &Counter{
-		num: 0,
-	}
-	return &Deleter{URL: urls, Counter: cnt, storage: storage, logger: logger, termCh: make(chan struct{}), wg: &sync.WaitGroup{}}
+func InitDeleter(storage storage.URLStorage, logger *zap.SugaredLogger) *Deleter {
+	return &Deleter{URL: make(chan string, maxURL), storage: storage, logger: logger, mutex: sync.Mutex{}, ticker: time.NewTicker(time.Second * 10)}
 }
 
 // Receive принимает URL в обработку
@@ -40,65 +34,66 @@ func (d *Deleter) Receive(delURLS []string, userID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if d.Counter.Value() > maxURL {
-		// хз как организовать ожидание 
-	}
-	d.Counter.Inc(len(delURLS))
-
 	urls, err := d.storage.GetURLByUser(ctx, userID)
 	if err != nil {
 		d.logger.Errorf("can't get urls by userID: %s, err: %w", userID, err)
-		d.Counter.Dec(len(delURLS))
 		return
 	}
-	d.validateURL(delURLS, urls)
+	d.validateURL(ctx, delURLS, urls) // TODO another context must be
 }
 
-func (d *Deleter) validateURL(delURLS []string, urls []*models.URLList) {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
-		for _, delURL := range delURLS {
-			var validURL string
-			for _, urlItem := range urls {
-				if strings.Contains(urlItem.ShortURL, delURL) {
-					validURL = delURL
-					break
+func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*models.URLList) {
+	for idx := range delURLS {
+		for idxUrlItem := range urls {
+			if strings.Contains(urls[idxUrlItem].ShortURL, delURLS[idx]) {
+				if len(d.URL) == 0 {
+					d.ticker.Reset(time.Second * 10)
 				}
-			}
-
-			select {
-			case <- d.termCh:
-				return
-			case d.URL <- validURL:
+				d.mutex.Lock()
+				d.URL <- delURLS[idx]
+				if len(d.URL) == maxURL {
+					d.logger.Info("deleting url because of full capacity")
+					urls := make([]string, 0, len(d.URL))
+					for i := 0; i < len(d.URL); i++ {
+						urls = append(urls, <-d.URL)
+					  }
+					d.storage.DeleteURLByUser(ctx, urls)
+				}
+				d.mutex.Unlock()
+				break
 			}
 		}
-	}()
-	d.wg.Wait()
+	}
 }
 
-func (d *Deleter) execute() {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
-		for data := range d.URL {
-			var batchDeleteURL []string
-			timer := time.NewTimer(30 * time.Second)
-
-			batchDeleteURL= append(batchDeleteURL, data)
-			<- timer.C
-
-			d.storage.DeleteURLByUser(context.Background(), batchDeleteURL)
+// StartWorker стартует обработчик удаляемых URL
+func (d *Deleter) StartWorker(ctx context.Context) {
+	select {
+	case <-ctx.Done():
+		{
+			d.logger.Info("stopping deleter worker")
+			urls := make([]string, 0, len(d.URL))
+			for i := 0; i < len(d.URL); i++ {
+				urls = append(urls, <-d.URL)
+			  }
+			d.storage.DeleteURLByUser(ctx, urls)
+			close(d.URL)
+			d.ticker.Stop()
 		}
-	}()
-	
-	go func() {
-		d.wg.Wait()
-	}()
-}
-
-func (d *Deleter) Close() {
-	if d.Counter.Value() != 0 {
-		// как сделать ожидание 0 ?
+	case <-d.ticker.C:
+		{
+			if len(d.URL) != 0 {
+				d.logger.Info("deleting url because of timer")
+				d.mutex.Lock()
+				d.logger.Info("mutex locked")
+				urls := make([]string, 0, len(d.URL))
+				for i := 0; i < len(d.URL); i++ {
+					urls = append(urls, <-d.URL)
+				  }
+				d.mutex.Unlock()
+				d.logger.Info("mutex unlocked")
+				d.storage.DeleteURLByUser(ctx, urls)
+			}
+		}
 	}
 }
