@@ -26,7 +26,7 @@ func NewFileStorage(filepath string) *FileStorage {
 }
 
 // DeleteURLByUser удаление URL текущего пользователя (не поддерживается).
-func (f *FileStorage) DeleteURLByUser(_ context.Context, _ chan string) error {
+func (f *FileStorage) DeleteURLByUser(_ context.Context, _ []string) error {
 	return models.ErrMockNotSupported
 }
 

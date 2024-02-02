@@ -87,20 +87,6 @@ func (s Service) GetURLByUser(ctx context.Context, userID string) ([]*models.URL
 	return allURLs, err
 }
 
-// DeleteURLByUser удаление URL по списку
-func (s Service) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
-	doneCh := make(chan struct{})
-
-	urlListByUser, err := s.GetURLByUser(ctx, userID)
-	if err != nil {
-		s.logger.Infow(err.Error(), "event:", "get url by user")
-	}
-	validatedChanel := validateUser(doneCh, urlListByUser, urls)
-	urlCh := fanIn(doneCh, validatedChanel)
-
-	s.storage.DeleteURLByUser(ctx, urlCh)
-}
-
 func generateUnitKey() string {
 	t := time.Now().UnixNano()
 

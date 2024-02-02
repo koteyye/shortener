@@ -16,6 +16,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/deleter"
 	"github.com/koteyye/shortener/internal/app/service"
 
 	"github.com/golang/mock/gomock"
@@ -30,7 +31,7 @@ import (
 const (
 	testSecretKey = "super_secret_key"
 	testURL       = "http://yandex.ru"
-
+	
 	baseURL       = "http://localhost:8080"
 	batch         = "/batch"
 	urlListByUser = "/api/user/urls"
@@ -41,12 +42,13 @@ const (
 func TestHandlers_NewHandlers(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		testService := service.Service{}
-		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey)
+		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey, &deleter.Deleter{})
 
 		assert.Equal(t, &Handlers{
 			services:  &testService,
 			logger:    &zap.SugaredLogger{},
 			secretKey: testSecretKey,
+			worker: &deleter.Deleter{},
 		}, handler)
 	})
 }
@@ -66,7 +68,7 @@ func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockURLStorage) {
 	defer logger.Sync()
 	log := *logger.Sugar()
 
-	handler := NewHandlers(service, &log, testSecretKey)
+	handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{})
 
 	return handler, repo
 }

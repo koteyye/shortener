@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 
 	"github.com/koteyye/shortener/internal/app/models"
@@ -96,22 +97,10 @@ func (d *DBStorage) GetShortURL(ctx context.Context, originalURL string) (string
 }
 
 // DeleteURLByUser удалить из базы сокращенные URL по поступающему каналу.
-func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls chan string) error {
-	tx, err := d.db.Begin()
+func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls []string) error {
+	_, err := d.db.DB.ExecContext(ctx, "update shorturl set is_deleted = true where shorturl in ($1)", pq.Array(urls))
 	if err != nil {
-		return fmt.Errorf("ошибка при старте транзакции удаления: %v", err)
-	}
-	defer tx.Rollback()
-
-	for url := range urls {
-		_, err := tx.ExecContext(ctx, "update shorturl set is_deleted = true where shorturl = $1", url)
-		if err != nil {
-			return fmt.Errorf("ошибка при обновлении записи с shorturl: %s\n ошибка: %v", url, err)
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		return err
+		return fmt.Errorf("ошибка при обновлении записей с shorturl")
 	}
 	return nil
 }

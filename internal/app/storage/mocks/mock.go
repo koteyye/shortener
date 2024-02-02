@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-
 	models "github.com/koteyye/shortener/internal/app/models"
 )
 
@@ -51,7 +50,7 @@ func (mr *MockURLStorageMockRecorder) AddURL(arg0, arg1, arg2, arg3 interface{})
 }
 
 // DeleteURLByUser mocks base method.
-func (m *MockURLStorage) DeleteURLByUser(arg0 context.Context, arg1 chan string) error {
+func (m *MockURLStorage) DeleteURLByUser(arg0 context.Context, arg1 []string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteURLByUser", arg0, arg1)
 	ret0, _ := ret[0].(error)

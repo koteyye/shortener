@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/koteyye/shortener/internal/app/service"
+	"github.com/koteyye/shortener/internal/app/deleter"
 
 	_ "github.com/koteyye/shortener/docs"
 )
@@ -14,12 +15,13 @@ import (
 type Handlers struct {
 	services  *service.Service
 	logger    *zap.SugaredLogger
+	worker *deleter.Deleter
 	secretKey string
 }
 
 // NewHandlers возвращает экземпляр http обработчика
-func NewHandlers(services *service.Service, logger *zap.SugaredLogger, secretKey string) *Handlers {
-	return &Handlers{services: services, logger: logger, secretKey: secretKey}
+func NewHandlers(services *service.Service, logger *zap.SugaredLogger, secretKey string, worker *deleter.Deleter) *Handlers {
+	return &Handlers{services: services, logger: logger, secretKey: secretKey, worker: worker}
 }
 
 // InitRoutes инициализация роутов

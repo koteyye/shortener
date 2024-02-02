@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/deleter"
 	"github.com/koteyye/shortener/internal/app/handlers"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
@@ -69,8 +70,9 @@ func main() {
 	if err != nil {
 		log.Fatalw(err.Error(), "event", "init storage")
 	}
+	worker := deleter.StartDeleter(storages, &log)
 	services := service.NewService(storages, cfg.Shortener, &log)
-	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey)
+	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, worker)
 
 	if cfg.Pprof != "" {
 		go func() {
@@ -79,7 +81,7 @@ func main() {
 		}()
 	}
 
-	runServer(ctx, cfg, handler, log)
+	runServer(ctx, cfg, handler, log, worker)
 
 }
 
@@ -100,7 +102,7 @@ func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handlers, log zap.SugaredLogger) error {
+func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handlers, log zap.SugaredLogger, worker *deleter.Deleter) error {
 	restServer := new(server.Server)
 	go func() {
 		if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil && err != http.ErrServerClosed {
@@ -113,6 +115,8 @@ func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handle
 	log.Info("shutting down server")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
+
+	worker.Close()
 
 	if err := restServer.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown: %w", err)

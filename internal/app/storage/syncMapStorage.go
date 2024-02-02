@@ -23,7 +23,7 @@ func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.URLList, e
 }
 
 // DeleteURLByUser удаляет сокращенный URL из поступающего канала (не поддерживается).
-func (u *URLMap) DeleteURLByUser(_ context.Context, _ chan string) error {
+func (u *URLMap) DeleteURLByUser(_ context.Context, _ []string) error {
 	return models.ErrMockNotSupported
 }
 
