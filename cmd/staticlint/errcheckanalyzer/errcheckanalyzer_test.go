@@ -3,8 +3,9 @@ package errcheckanalyzer_test
 import (
 	"testing"
 
-	"github.com/koteyye/shortener/cmd/staticlint/errcheckanalyzer"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	"github.com/koteyye/shortener/cmd/staticlint/errcheckanalyzer"
 )
 
 func TestErrCheckAnalyzer(t *testing.T) {
