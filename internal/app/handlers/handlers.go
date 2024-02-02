@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/koteyye/shortener/internal/app/service"
-	"github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
+
+	"github.com/koteyye/shortener/internal/app/service"
 
 	_ "github.com/koteyye/shortener/docs"
 )

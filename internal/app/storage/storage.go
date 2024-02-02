@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
-	"github.com/koteyye/shortener/internal/app/models"
 	"go.uber.org/zap"
+
+	"github.com/koteyye/shortener/internal/app/models"
 )
 
 // URLStorage интерфейс хранилища.
@@ -13,10 +15,10 @@ import (
 //go:generate mockgen -source=storage.go -destination=mocks/mock.go
 type URLStorage interface {
 	AddURL(context.Context, string, string, string) error
-	GetURL(context.Context, string) (*models.URL, error)
+	GetURL(context.Context, string) (*models.SingleURL, error)
 	GetDBPing(ctx context.Context) error
 	GetShortURL(context.Context, string) (string, error)
-	GetURLByUser(context.Context, string) ([]*models.AllURLs, error)
+	GetURLByUser(context.Context, string) ([]*models.URLList, error)
 	DeleteURLByUser(context.Context, chan string) error
 }
 

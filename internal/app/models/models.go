@@ -5,59 +5,39 @@ import (
 	"strings"
 )
 
-// OriginalURL оригинальный URL.
-type OriginalURL struct {
-	URL string `json:"url"`
+// SignleURL структура для одного URL
+type SingleURL struct {
+	ID        string `json:"id,omitempty"`
+	URL       string `json:"url,omitempty" db:"originalurl"`
+	ShortURL  string `json:"short_url,omitempty" db:"shorturl"`
+	IsDeleted bool   `json:"is_deleted,omitempty" db:"is_deleted"`
 }
 
-// ShortURL сокращенный URL.
-type ShortURL struct {
-	Result string `json:"result"`
-}
-
-// AllURLs элемент списка со всеми URL.
-type AllURLs struct {
-	ID          int    `json:"id,omitempty"`
-	ShortURL    string `json:"short_url" db:"shorturl"`
-	OriginalURL string `json:"original_url" db:"originalurl"`
-}
-
-// URLList элемент списка с сокращенным URL.
+// URLList структура для списка URL
 type URLList struct {
-	ID       string `json:"correlation_id"`
-	ShortURL string `json:"short_url"`
+	Number   int    `json:"id,omitempty"`
+	ID       string `json:"correlation_id,omitempty"`
+	URL      string `json:"original_url,omitempty" db:"originalurl"`
+	ShortURL string `json:"short_url,omitempty" db:"shorturl"`
 	Msg      string `json:"msg,omitempty"`
 }
 
-// OriginURLList элемент списка с оригинальным URL.
-type OriginURLList struct {
-	ID        string `json:"correlation_id"`
-	OriginURL string `json:"original_url"`
-}
-
-// URL элемент списка с URL и признаком удаления.
-type URL struct {
-	ShortURL    string `db:"shorturl"`
-	OriginalURL string `db:"originalurl"`
-	IsDeleted   bool   `db:"is_deleted"`
-}
-
 // Validate валидация списка с оригинальным URL.
-func (o *OriginURLList) Validate() error {
+func (o *URLList) Validate() error {
 	if o.ID == "" {
 		return ErrNullRequestBody
 	}
-	if o.OriginURL == "" {
+	if o.URL == "" {
 		return ErrInvalidRequestBodyURL
 	}
-	if !strings.Contains(o.OriginURL, "http") {
+	if !strings.Contains(o.URL, "http") {
 		return fmt.Errorf("некорректно указан original_url с correlation_id: %v", o.ID)
 	}
 	return nil
 }
 
 // Validate валидация оригинального URL.
-func (u *OriginalURL) Validate() error {
+func (u *SingleURL) Validate() error {
 	if u.URL == "" {
 		return ErrNullRequestBody
 	}

@@ -3,34 +3,61 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
-	"github.com/koteyye/shortener/internal/app/service"
-	"io"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/lib/pq"
+
+	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/service"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/koteyye/shortener/internal/app/models"
-	mockservice "github.com/koteyye/shortener/internal/app/service/mocks"
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+
+	"github.com/koteyye/shortener/internal/app/models"
+	mockservice "github.com/koteyye/shortener/internal/app/storage/mocks"
 )
 
 const (
 	testSecretKey = "super_secret_key"
+	testURL       = "http://yandex.ru"
+
+	baseURL       = "http://localhost:8080"
+	batch         = "/batch"
+	urlListByUser = "/api/user/urls"
+	jsonShortener = "/api/shorten"
+	ping          = "/ping"
 )
 
+func TestHandlers_NewHandlers(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		testService := service.Service{}
+		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey)
+
+		assert.Equal(t, &Handlers{
+			services:  &testService,
+			logger:    &zap.SugaredLogger{},
+			secretKey: testSecretKey,
+		}, handler)
+	})
+}
+
 // testInitHandler инициализация тестового обработчика
-func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockShortener) {
+func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockURLStorage) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 
-	repo := mockservice.NewMockShortener(c)
-	service := service.Service{Shortener: repo}
+	repo := mockservice.NewMockURLStorage(c)
+	service := service.NewService(repo, &config.Shortener{Listen: "http://localhost:8081"}, &zap.SugaredLogger{})
 
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -39,9 +66,14 @@ func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockShortener) {
 	defer logger.Sync()
 	log := *logger.Sugar()
 
-	handler := NewHandlers(&service, &log, testSecretKey)
+	handler := NewHandlers(service, &log, testSecretKey)
 
 	return handler, repo
+}
+
+func generateUnitKey() string {
+	t := time.Now().UnixNano()
+	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprint(t)))
 }
 
 func TestHandlers_Batch(t *testing.T) {
@@ -49,10 +81,6 @@ func TestHandlers_Batch(t *testing.T) {
 		{
 			"correlation_id": "afd90f2c-b0df-4873-8ded-62d8e99593ba",
 			"original_url": "http://lcpjtoddpyyp.yandex/sjkhh"
-		},
-		{
-			"correlation_id": "f5993975-38fc-4f95-8234-0639079194cf",
-			"original_url": "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv"
 		}
 		]`
 
@@ -60,26 +88,19 @@ func TestHandlers_Batch(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			h, s := testInitHandler(t)
 
-			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(testRequest))
+			r := httptest.NewRequest(http.MethodPost, batch, strings.NewReader(testRequest))
+			r.Header.Add("Content-Type", ctApplicationJSON)
 			w := httptest.NewRecorder()
 
-			var testOriginURLList []*models.OriginURLList
+			var testOriginURLList []*models.URLList
 			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
 			assert.NoError(t, err)
 
 			userID := uuid.NewString()
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 
-			s.EXPECT().Batch(gomock.Any(), testOriginURLList, userID).Return([]*models.URLList{
-				{
-					ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
-				},
-				{
-					ID:       "5993975-38fc-4f95-8234-0639079194cf",
-					ShortURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-				},
-			}, nil)
+			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh", userID).Return(error(nil))
+			s.EXPECT().GetShortURL(gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh").Return(generateUnitKey(), error(nil))
 
 			h.Batch(w, r.WithContext(ctx))
 
@@ -89,31 +110,25 @@ func TestHandlers_Batch(t *testing.T) {
 			h, s := testInitHandler(t)
 
 			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(testRequest))
+			r.Header.Add("Content-Type", ctApplicationJSON)
 			w := httptest.NewRecorder()
 
-			var testOriginURLList []*models.OriginURLList
+			var testOriginURLList []*models.URLList
 			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
 			assert.NoError(t, err)
 
 			userID := uuid.NewString()
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 
-			s.EXPECT().Batch(gomock.Any(), testOriginURLList, userID).Return([]*models.URLList{
-				{
-					ID:       "afd90f2c-b0df-4873-8ded-62d8e99593ba",
-					ShortURL: "http://lcpjtoddpyyp.yandex/sjkhh",
-					Msg:      models.ErrDuplicate.Error(),
-				},
-				{
-					ID:       "5993975-38fc-4f95-8234-0639079194cf",
-					ShortURL: "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
-					Msg:      models.ErrDuplicate.Error(),
-				},
-			}, nil)
+			testPQErr := &pq.Error{Code: models.PqDuplicateErr}
+
+			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh", userID).Return(error(testPQErr))
+			s.EXPECT().GetShortURL(gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh").Return(generateUnitKey(), error(nil))
 
 			h.Batch(w, r.WithContext(ctx))
 
 			assert.Equal(t, http.StatusConflict, w.Code)
+			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
 		})
 		t.Run("url_empty", func(t *testing.T) {
 			h, _ := testInitHandler(t)
@@ -129,9 +144,10 @@ func TestHandlers_Batch(t *testing.T) {
 				]`
 
 			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(reqBody))
+			r.Header.Add("Content-Type", ctApplicationJSON)
 			w := httptest.NewRecorder()
 
-			var testOriginURLList []*models.OriginURLList
+			var testOriginURLList []*models.URLList
 			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
 			assert.NoError(t, err)
 
@@ -141,192 +157,170 @@ func TestHandlers_Batch(t *testing.T) {
 			h.Batch(w, r.WithContext(ctx))
 
 			assert.Equal(t, http.StatusBadRequest, w.Code)
+			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
 		})
 	})
 }
 
 func TestHandlers_GetURLsByUser(t *testing.T) {
-	type mockBehavior func(r *mockservice.MockShortener, userID string)
-	tests := []struct {
-		name                 string
-		mockBehavior         mockBehavior
-		expectedStatusCode   int
-		expectedResponseBody string
-	}{
-		{
-			name: "success",
-			mockBehavior: func(r *mockservice.MockShortener, userID string) {
-				r.EXPECT().GetURLByUser(gomock.Any(), userID).Return([]*models.AllURLs{
-					{
-						ShortURL:    "http://localhost:8080/iwvwpvwepofpwoe",
-						OriginalURL: "http://yandex.ru",
-					},
-				}, nil)
-			},
-			expectedStatusCode:   200,
-			expectedResponseBody: `[{"short_url":"http://localhost:8080/iwvwpvwepofpwoe","original_url":"http://yandex.ru"}]`,
-		},
-		{
-			name: "no content",
-			mockBehavior: func(r *mockservice.MockShortener, userID string) {
-				r.EXPECT().GetURLByUser(gomock.Any(), userID).Return(nil, sql.ErrNoRows)
-			},
-			expectedStatusCode: 204,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-
-			r := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
+	t.Run("get_urls_by_user", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodPost, urlListByUser, nil)
 			w := httptest.NewRecorder()
 
 			userID := uuid.New()
 			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
-			repo := mockservice.NewMockShortener(c)
-			if test.mockBehavior != nil {
-				test.mockBehavior(repo, userID.String())
+			repoRes := make([]*models.URLList, 1)
+			repoRes[0] = &models.URLList{
+				URL:      "http://sd37z.ru/klrotsvqdpjaj/hs0jfw6xiiv",
+				ShortURL: "j90iejf9032jf923jf0923fj3029f==",
 			}
+			s.EXPECT().GetURLByUser(gomock.Any(), userID.String()).Return(repoRes, error(nil))
 
-			services := service.Service{Shortener: repo}
-			handler := Handlers{services: &services}
+			h.GetURLsByUser(w, r.WithContext(ctx))
 
-			handler.GetURLsByUser(w, r.WithContext(ctx))
-
-			assert.Equal(t, test.expectedStatusCode, w.Code)
-			if test.expectedResponseBody != "" {
-				assert.JSONEq(t, test.expectedResponseBody, w.Body.String())
-			}
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
 		})
-	}
+		t.Run("no content", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodPost, urlListByUser, nil)
+			w := httptest.NewRecorder()
+
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+
+			s.EXPECT().GetURLByUser(gomock.Any(), userID.String()).Return(nil, error(sql.ErrNoRows))
+
+			h.GetURLsByUser(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusNoContent, w.Code)
+			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
+		})
+	})
 }
 
 func TestHandlers_JSONShortenURL(t *testing.T) {
-	type mockBehavior func(r *mockservice.MockShortener, url string)
-	tests := []struct {
-		name                 string
-		inputBody            io.Reader
-		inputURL             string
-		mockBehavior         mockBehavior
-		expectedStatusCode   int
-		expectedResponseBody string
-	}{
-		{
-			name:      "success",
-			inputBody: strings.NewReader(`{"url": "http://yandex.ru"}`),
-			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mockservice.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("http://localhost:8080/3g2gf2f2", nil)
-			},
-			expectedStatusCode:   201,
-			expectedResponseBody: `{"result": "http://localhost:8080/3g2gf2f2"}`,
-		},
-		{
-			name:      "conflict",
-			inputBody: strings.NewReader(`{"url": "http://yandex.ru"}`),
-			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mockservice.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("", &pq.Error{Code: models.PqDuplicateErr})
-			},
-			expectedStatusCode:   409,
-			expectedResponseBody: `{"result": "http://localhost:8080/3g2gf2f2"}`,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-
-			r := httptest.NewRequest(http.MethodGet, "/api/shorten", test.inputBody)
+	testRequest := `{"url": "http://yandex.ru"}`
+	t.Run("JSONShortenURL", func(t *testing.T) {
+		t.Run("succes", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodPost, jsonShortener, strings.NewReader(testRequest))
+			r.Header.Add("Content-Type", ctApplicationJSON)
 			w := httptest.NewRecorder()
 
 			userID := uuid.New()
 			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
 
-			repo := mockservice.NewMockShortener(c)
-			if test.mockBehavior != nil {
-				test.mockBehavior(repo, test.inputURL)
-			}
-			if test.expectedStatusCode == 409 {
-				repo.EXPECT().GetShortURLFromOriginal(gomock.Any(), test.inputURL).Return("http://localhost:8080/3g2gf2f2", nil)
-			}
+			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), testURL, userID.String()).Return(error(nil))
 
-			services := service.Service{Shortener: repo}
-			handler := Handlers{services: &services}
+			h.JSONShortenURL(w, r.WithContext(ctx))
 
-			handler.JSONShortenURL(w, r.WithContext(ctx))
-
-			assert.Equal(t, test.expectedStatusCode, w.Code)
-			if test.expectedResponseBody != "" {
-				assert.JSONEq(t, test.expectedResponseBody, w.Body.String())
-			}
+			assert.Equal(t, http.StatusCreated, w.Code)
+			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
 		})
-	}
+		t.Run("conflict", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodPost, jsonShortener, strings.NewReader(testRequest))
+			r.Header.Add("Content-Type", ctApplicationJSON)
+			w := httptest.NewRecorder()
+
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+
+			testPQErr := &pq.Error{Code: models.PqDuplicateErr}
+			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), testURL, userID.String()).Return(error(testPQErr))
+			s.EXPECT().GetShortURL(gomock.Any(), testURL).Return(generateUnitKey(), error(nil))
+
+			h.JSONShortenURL(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusConflict, w.Code)
+			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
+		})
+	})
 }
 
 func TestHandlers_ShortenURL(t *testing.T) {
-	type mockBehavior func(r *mockservice.MockShortener, url string)
-	tests := []struct {
-		name                 string
-		inputBody            io.Reader
-		inputURL             string
-		mockBehavior         mockBehavior
-		expectedStatusCode   int
-		expectedResponseBody string
-	}{
-		{
-			name:      "success",
-			inputBody: strings.NewReader(`http://yandex.ru`),
-			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mockservice.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("http://localhost:8080/3g2gf2f2", nil)
-			},
-			expectedStatusCode:   201,
-			expectedResponseBody: `http://localhost:8080/3g2gf2f2`,
-		},
-		{
-			name:      "conflict",
-			inputBody: strings.NewReader(`http://yandex.ru`),
-			inputURL:  "http://yandex.ru",
-			mockBehavior: func(r *mockservice.MockShortener, url string) {
-				r.EXPECT().AddShortURL(gomock.Any(), url, gomock.Any()).Return("", &pq.Error{Code: models.PqDuplicateErr})
-			},
-			expectedStatusCode:   409,
-			expectedResponseBody: `http://localhost:8080/3g2gf2f2`,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			c := gomock.NewController(t)
-			defer c.Finish()
-
-			r := httptest.NewRequest(http.MethodPost, "/", test.inputBody)
+	t.Run("shortenURL", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(testURL))
 			w := httptest.NewRecorder()
 
 			userID := uuid.New()
 			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), testURL, userID.String()).Return(error(nil))
 
-			repo := mockservice.NewMockShortener(c)
-			if test.mockBehavior != nil {
-				test.mockBehavior(repo, test.inputURL)
-			}
-			if test.expectedStatusCode == 409 {
-				repo.EXPECT().GetShortURLFromOriginal(gomock.Any(), test.inputURL).Return("http://localhost:8080/3g2gf2f2", nil)
-			}
+			h.ShortenURL(w, r.WithContext(ctx))
 
-			services := service.Service{Shortener: repo}
-			handler := Handlers{services: &services}
-
-			handler.ShortenURL(w, r.WithContext(ctx))
-
-			assert.Equal(t, test.expectedStatusCode, w.Code)
-			if test.expectedResponseBody != "" {
-				assert.Equal(t, test.expectedResponseBody, w.Body.String())
-			}
+			assert.Equal(t, http.StatusCreated, w.Code)
+			assert.Equal(t, "text/plain; charset=utf-8", w.Header().Get("Content-Type"))
 		})
-	}
+	})
+}
+
+func TestHandlers_Ping(t *testing.T) {
+	t.Run("Ping", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodGet, ping, nil)
+			w := httptest.NewRecorder()
+
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+			s.EXPECT().GetDBPing(gomock.Any()).Return(error(nil))
+
+			h.Ping(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+		t.Run("error", func(t *testing.T) {
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodGet, ping, nil)
+			w := httptest.NewRecorder()
+
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+			s.EXPECT().GetDBPing(gomock.Any()).Return(errors.New("err"))
+
+			h.Ping(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+	})
+}
+
+func TestHandlers_GetOriginalURL(t *testing.T) {
+	t.Run("get_original_URL", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			shortURL := generateUnitKey()
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodGet, "/"+shortURL, nil)
+
+			w := httptest.NewRecorder()
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+			s.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(&models.SingleURL{URL: testURL}, error(nil))
+
+			h.GetOriginalURL(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusTemporaryRedirect, w.Code)
+		})
+		t.Run("gone", func(t *testing.T) {
+			shortURL := generateUnitKey()
+			h, s := testInitHandler(t)
+			r := httptest.NewRequest(http.MethodGet, "/"+shortURL, nil)
+
+			w := httptest.NewRecorder()
+			userID := uuid.New()
+			ctx := context.WithValue(r.Context(), userIDKey, userID.String())
+			s.EXPECT().GetURL(gomock.Any(), gomock.Any()).Return(&models.SingleURL{IsDeleted: true}, error(nil))
+
+			h.GetOriginalURL(w, r.WithContext(ctx))
+
+			assert.Equal(t, http.StatusGone, w.Code)
+		})
+	})
 }

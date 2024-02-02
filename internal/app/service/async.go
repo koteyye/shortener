@@ -25,47 +25,6 @@ func add(doneCh chan struct{}, urls []string) chan string {
 	return addURL
 }
 
-func validateUser(doneCh chan struct{}, inputCh chan string, urlListByUser []*models.AllURLs) chan string {
-	validateURL := make(chan string)
-
-	go func() {
-		defer close(validateURL)
-
-		for data := range inputCh {
-			var result string
-			for _, urlItemByUser := range urlListByUser {
-				if strings.Contains(urlItemByUser.ShortURL, data) {
-					result = data
-					break
-				}
-			}
-
-			select {
-			case <-doneCh:
-				return
-			case validateURL <- result:
-			}
-		}
-	}()
-	return validateURL
-}
-
-func fanOut(doneCh chan struct{}, inputCh chan string, urlListByUser []*models.AllURLs) []chan string {
-	//количество горутин
-	numWorkers := 10
-
-	channels := make([]chan string, numWorkers)
-
-	for i := 0; i < numWorkers; i++ {
-		// канал из горутины add
-		addResultCh := validateUser(doneCh, inputCh, urlListByUser)
-		// отправляем в слайс каналов
-		channels[i] = addResultCh
-	}
-
-	return channels
-}
-
 func fanIn(doneCh chan struct{}, resultChs ...chan string) chan string {
 	finalCh := make(chan string)
 
@@ -97,4 +56,29 @@ func fanIn(doneCh chan struct{}, resultChs ...chan string) chan string {
 	}()
 
 	return finalCh
+}
+
+func validateUser(doneCh chan struct{}, urlListByUser []*models.URLList, urls []string) chan string {
+	validateURL := make(chan string)
+
+	go func() {
+		defer close(validateURL)
+
+		for _, url := range urls {
+			var result string
+			for _, urlItem := range urlListByUser {
+				if strings.Contains(urlItem.ShortURL, url) {
+					result = url
+					break
+				}
+			}
+
+			select {
+			case <-doneCh:
+				return
+			case validateURL <- result:
+			}
+		}
+	}()
+	return validateURL
 }

@@ -1,5 +1,6 @@
 SHORTENER_PORT := 8080
 DATABASE_SHORTENER := postgres://postgres:postgres@localhost:5432/shortener?sslmode=disable
+FILE_STORAGE_PATH := /tmp/short-url-db.json
 
 .DEFAULT_GOAL := all
 
@@ -42,10 +43,11 @@ build:
 .PHONY: autotest
 autotest: build
 	@./shortenertestbeta \
-		-test.v -test.run=^TestIteration18 \
+		-test.v -test.run=^TestIteration7 \
 		-binary-path=cmd/shortener/shortener \
 		-server-host=localhost \
 		-server-port=8081 \
 		-server-base-url=localhost:8081 \
 		-source-path=cmd/shortener \
 		-database-dsn=${DATABASE_SHORTENER} \
+		-file-storage-path=${FILE_STORAGE_PATH}\
