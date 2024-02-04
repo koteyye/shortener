@@ -219,7 +219,7 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 
 	urls, _ := mapRequestDeleteByUser(r)
 
-	go h.worker.Receive(urls, userID)
+	go h.worker.Receive(ctx, urls, userID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

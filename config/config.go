@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"slices"
+	"strings"
 
 	"github.com/caarlos0/env/v6"
 )
@@ -97,7 +97,12 @@ func initFlags() *cliFlag {
 }
 
 func isFlagPassed(name string) bool {
-	return slices.Contains(os.Args, "-"+name)
+	for _, arg := range os.Args {
+		if strings.Index(arg, "-"+name) == 0 && (strings.Index(arg, "=") == len("-"+name) || strings.Index(arg, "=") == 0) {
+			return true
+		}
+	}
+	return false
 }
 
 type fileConfig struct {

@@ -64,7 +64,10 @@ func TestConfig_GetConfig(t *testing.T) {
 				os.Args = oldArg
 				flag.CommandLine = oldCommandLine
 			}()
-			flag.CommandLine = flag.NewFlagSet(`test`, flag.ExitOnError)
+			flag.CommandLine = flag.NewFlagSet("test", flag.ExitOnError)
+
+			args := []string{"test", "-a", "localhost:8083"}
+			os.Args = args
 
 			cfg, err := GetConfig()
 			wantCfg := &Config{
