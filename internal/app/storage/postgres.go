@@ -86,7 +86,7 @@ func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (*models.Single
 // GetShortURL получить сокращенный URL из базы.
 func (d *DBStorage) GetShortURL(ctx context.Context, originalURL string) (string, error) {
 	var result string
-	err := d.db.GetContext(ctx, &result, "select shorturl from shorturl where originalurl = $1", originalURL)
+	err := d.db.GetContext(ctx, &result, "select shorturl from shorturl where originalurl = $1 and is_deleted = false", originalURL)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", models.ErrNotFound
