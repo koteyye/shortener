@@ -116,7 +116,7 @@ func TestStartWorker(t *testing.T) {
 			s.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
 			s.EXPECT().DeleteURLByUser(gomock.Any(), gomock.Any()).Return(error(nil))
 
-			d.Receive(context.Background(), url, userID.String())
+			d.Receive(url, userID.String())
 
 			d.test.mutex.Lock()
 			assert.Equal(t, timeoutMsg, <-d.test.msg)

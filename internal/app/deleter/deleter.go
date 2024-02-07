@@ -42,7 +42,9 @@ func InitDeleter(storage storage.URLStorage, logger *zap.SugaredLogger) *Deleter
 }
 
 // Receive принимает URL в обработку
-func (d *Deleter) Receive(ctx context.Context, delURLS []string, userID string) {
+func (d *Deleter) Receive(delURLS []string, userID string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	urls, err := d.storage.GetURLByUser(ctx, userID)
 	if err != nil {
 		d.logger.Errorf("can't get urls by userID: %s, err: %w", userID, err)
@@ -69,10 +71,6 @@ func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*mod
 
 					d.storage.DeleteURLByUser(ctx, urls)
 					d.mutex.Unlock()
-					if d.test.isTest {
-						d.logger.Info("send msg in chanel")
-						d.test.msg <- maxItemMsg
-					}
 
 				}
 				d.mutex.Unlock()
