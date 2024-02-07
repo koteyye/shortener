@@ -6,17 +6,18 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/storage"
-	"go.uber.org/zap"
 )
 
 const (
 	maxURL = 50 // максимальное количество обрабатываемых URL
 
-	maxItemMsg = "delete with maxitem"
+	maxItemMsg  = "delete with maxitem"
 	gracefulMsg = "stoped delete worker"
-	timeoutMsg = "delete with timeout"
+	timeoutMsg  = "delete with timeout"
 )
 
 // Deleter воркер выполняющий асинхронное удаление
@@ -26,12 +27,13 @@ type Deleter struct {
 	storage storage.URLStorage
 	logger  *zap.SugaredLogger
 	mutex   sync.Mutex
-	test *unitTest
+	test    *unitTest
 }
 
 type unitTest struct {
 	isTest bool
-	msg chan string
+	msg    chan string
+	mutex  sync.Mutex
 }
 
 // StartDeleter запускает воркер
@@ -46,7 +48,7 @@ func (d *Deleter) Receive(ctx context.Context, delURLS []string, userID string) 
 		d.logger.Errorf("can't get urls by userID: %s, err: %w", userID, err)
 		return
 	}
-	d.validateURL(ctx, delURLS, urls) // TODO another context must be
+	d.validateURL(ctx, delURLS, urls)
 }
 
 func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*models.URLList) {
@@ -64,7 +66,14 @@ func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*mod
 					for i := 0; i < len(d.URL); i++ {
 						urls = append(urls, <-d.URL)
 					}
+
 					d.storage.DeleteURLByUser(ctx, urls)
+					d.mutex.Unlock()
+					if d.test.isTest {
+						d.logger.Info("send msg in chanel")
+						d.test.msg <- maxItemMsg
+					}
+
 				}
 				d.mutex.Unlock()
 				break
@@ -73,6 +82,7 @@ func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*mod
 	}
 }
 
+// StartWorker запускает обработчик удаления URL
 func (d *Deleter) StartWorker(ctx context.Context) {
 	for {
 		select {
@@ -84,14 +94,14 @@ func (d *Deleter) StartWorker(ctx context.Context) {
 				for i := 0; i < len(d.URL); i++ {
 					urls = append(urls, <-d.URL)
 				}
-				if d.test.isTest {
-					d.test.msg <-gracefulMsg
-					close(d.test.msg)
-				}
 				d.storage.DeleteURLByUser(ctx, urls)
 				close(d.URL)
 				d.ticker.Stop()
 				d.mutex.Unlock()
+				if d.test.isTest {
+					d.test.msg <- gracefulMsg
+					close(d.test.msg)
+				}
 				d.logger.Info("stopped deleter worker")
 
 				return
@@ -107,12 +117,11 @@ func (d *Deleter) StartWorker(ctx context.Context) {
 					}
 					d.mutex.Unlock()
 					if d.test.isTest {
-						d.test.msg <-timeoutMsg
+						d.test.msg <- timeoutMsg
 					}
 					d.storage.DeleteURLByUser(ctx, urls)
 				}
 			}
-
 		}
 	}
 }

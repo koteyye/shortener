@@ -45,6 +45,11 @@ func (f *FileStorage) GetDBPing(_ context.Context) error {
 	return models.ErrFileNotSupported
 }
 
+// GetCount получить количество URL и пользователей (не поддерживается)
+func (f *FileStorage) GetCount(_ context.Context) (int, int, error) {
+	return 0, 0, models.ErrFileNotSupported
+}
+
 // AddURL добавление URL в файловое хранилище.
 func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) error {
 	var id int

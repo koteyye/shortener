@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
+	"net"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/deleter"
@@ -23,6 +25,21 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+// @Title Shortener
+// @Description Сервис для сокращения URL.
+// @Version 1.0
+
+// @Contact.email koteyye@yandex.ru
+
+// @BasePath /
+// @Host localhost:8081
+
+// @Tag.name Info
+// @Tag.description "Группа запросов состояния сервиса"
+
+// @Tag.name Shortener
+// @Tag.desctiption "Группа запросов для сокращения URL"
 
 const (
 	shutdownTimeout = 5 * time.Second
@@ -66,6 +83,13 @@ func main() {
 			log.Fatalw(err.Error(), "event", "connect db")
 		}
 	}
+	var subnet *net.IPNet
+	if cfg.TrustSubnet != "" {
+		subnet, err = cfg.CIDR()
+		if err != nil {
+			log.Fatal(err.Error(), "event", "cidr")
+		}
+	}
 
 	//init internal
 	storages, err := storage.NewURLHandle(&log, db, cfg.FileStoragePath)
@@ -74,7 +98,7 @@ func main() {
 	}
 	worker := deleter.InitDeleter(storages, &log)
 	services := service.NewService(storages, cfg.Shortener, &log)
-	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, worker)
+	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, worker, subnet)
 
 	if cfg.Pprof != "" {
 		g.Go(func() error {
@@ -86,7 +110,8 @@ func main() {
 	}
 
 	g.Go(func() error {
-		return runServer(gCtx, cfg, handler, log, worker)
+		runServer(gCtx, cfg, handler, log)
+		return nil
 	})
 
 	g.Go(func() error {
@@ -116,11 +141,16 @@ func newPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handlers, log zap.SugaredLogger, worker *deleter.Deleter) error {
+func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handlers, log zap.SugaredLogger) error {
 	restServer := new(server.Server)
-	if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil && err != http.ErrServerClosed {
-		log.Fatalw(err.Error(), "event", "start server")
-	}
+	go func() {
+		if err := restServer.Run(cfg.EnbaleHTTPS, cfg.Server.Listen, handler.InitRoutes(cfg.Server.BaseURL)); err != nil && err != http.ErrServerClosed {
+			log.Fatalw(err.Error(), "event", "start server")
+		}
+	}()
+
+	<-ctx.Done()
+
 	log.Info("shutting down server")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()

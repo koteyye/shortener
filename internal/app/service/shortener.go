@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -85,6 +86,15 @@ func (s Service) GetURLByUser(ctx context.Context, userID string) ([]*models.URL
 		urlItem.ShortURL = finalURL
 	}
 	return allURLs, err
+}
+
+// GetStats получает значения для статистики из Storage
+func (s Service) GetStats(ctx context.Context) (*models.Stats, error) {
+	countURL, countUser, err := s.storage.GetCount(ctx)
+	if err != nil {
+		return nil, errors.New("can't get stats from storage")
+	}
+	return &models.Stats{URLs: countURL, Users: countUser}, nil
 }
 
 func generateUnitKey() string {

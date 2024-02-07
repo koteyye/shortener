@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
@@ -26,6 +27,7 @@ type Config struct {
 	JWTSecretKey    string
 	Pprof           string
 	EnbaleHTTPS     bool
+	TrustSubnet     string
 }
 
 // Server сервер конфигурации сервиса.
@@ -49,18 +51,20 @@ type ENVValue struct {
 	Pprof           string `env:"PPROF"`
 	EnbaleHTTPS     bool   `env:"ENABLE_HTTPS"`
 	ConfigPath      string `env:"CONFIG"`
+	TrustSubnet     string `env:"TRUST_SUBNET"`
 }
 
 // cliFlag флаги командной строки.
 type cliFlag struct {
-	flagJWT      string
-	flagAddress  string
-	flagShorten  string
-	flagFilePath string
-	flagDSN      string
-	flagPprof    string
-	flagHTTPS    bool
-	flagConfig   string
+	flagJWT         string
+	flagAddress     string
+	flagShorten     string
+	flagFilePath    string
+	flagDSN         string
+	flagPprof       string
+	flagHTTPS       bool
+	flagConfig      string
+	flagTrustSubnet string
 }
 
 func initFlags() *cliFlag {
@@ -92,6 +96,9 @@ func initFlags() *cliFlag {
 	if isFlagPassed("config") {
 		flag.StringVar(&cliFlags.flagConfig, "config", "", "config path")
 	}
+	if isFlagPassed("t") {
+		flag.StringVar(&cliFlags.flagTrustSubnet, "t", "", "trusted subnt")
+	}
 	flag.Parse()
 	return cliFlags
 }
@@ -113,6 +120,7 @@ type fileConfig struct {
 	JWTSecretKey    string `json:"JWTSecretKey"`
 	Pprof           string `json:"pprof"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustSubnet     string `json:"trusted_subnet"`
 }
 
 // ConfigFromFile получить конфиг из файла
@@ -126,6 +134,12 @@ func (c *fileConfig) ConfigFromFile(filepath string) error {
 		return fmt.Errorf("can't unmarshal config file: %w", err)
 	}
 	return nil
+}
+
+// CIDR получение *IPNet из конфига
+func (c *Config) CIDR() (*net.IPNet, error) {
+	_, subnet, err := net.ParseCIDR(c.TrustSubnet)
+	return subnet, err
 }
 
 // GetConfig получить конфигурацию приложения
@@ -162,6 +176,7 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag, fileVal *fileConfig
 		JWTSecretKey:    calcVal(envVal.JWTSecretKey, cliFlags.flagJWT, fileVal.JWTSecretKey, deafultSecretKey),
 		Pprof:           calcVal(envVal.Pprof, cliFlags.flagPprof, fileVal.Pprof, ""),
 		EnbaleHTTPS:     calcHTTPS(envVal.EnbaleHTTPS, cliFlags.flagHTTPS, fileVal.EnableHTTPS),
+		TrustSubnet:     calcVal(envVal.TrustSubnet, cliFlags.flagTrustSubnet, fileVal.TrustSubnet, ""),
 	}
 
 }

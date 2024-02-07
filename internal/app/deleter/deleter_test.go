@@ -9,12 +9,13 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/koteyye/shortener/internal/app/models"
-	"github.com/koteyye/shortener/internal/app/storage"
-	mock_storage "github.com/koteyye/shortener/internal/app/storage/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/koteyye/shortener/internal/app/models"
+	"github.com/koteyye/shortener/internal/app/storage"
+	mock_storage "github.com/koteyye/shortener/internal/app/storage/mocks"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -33,8 +34,6 @@ func TestDeleter_InitDeleter(t *testing.T) {
 }
 
 func testInitDeleter(t *testing.T) (*Deleter, *mock_storage.MockURLStorage) {
-	g, gCtx := errgroup.WithContext(context.Background())
-
 	c := gomock.NewController(t)
 	defer c.Finish()
 
@@ -52,13 +51,8 @@ func testInitDeleter(t *testing.T) (*Deleter, *mock_storage.MockURLStorage) {
 		storage: repo,
 		logger:  &log,
 		mutex:   sync.Mutex{},
-		test:    &unitTest{isTest: true, msg: make(chan string)},
+		test:    &unitTest{isTest: true, msg: make(chan string), mutex: sync.Mutex{}},
 	}
-
-	g.Go(func() error {
-		deleter.StartWorker(gCtx)
-		return nil
-	})
 
 	return deleter, repo
 }
@@ -66,11 +60,42 @@ func testInitDeleter(t *testing.T) (*Deleter, *mock_storage.MockURLStorage) {
 func TestStartWorker(t *testing.T) {
 
 	t.Run("testWorker", func(t *testing.T) {
-		
+		d, s := testInitDeleter(t)
+
+		g, gCtx := errgroup.WithContext(context.Background())
+		g.Go(func() error {
+			d.StartWorker(gCtx)
+			return nil
+		})
+		// t.Run("max content", func(t *testing.T) {
+
+		// 	url := make([]string, 50)
+		// 	for i := range url {
+		// 		url[i] = randSeq(10)
+		// 	}
+
+		// 	testURLList := make([]*models.URLList, 50)
+		// 	for i := range testURLList {
+		// 		testURLList[i] = &models.URLList{
+		// 			Number:   i,
+		// 			URL:      "http://localhost:8080/" + randSeq(10),
+		// 			ShortURL: url[i],
+		// 		}
+		// 	}
+
+		// 	userID, err := uuid.NewRandom()
+		// 	assert.NoError(t, err)
+
+		// 	s.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
+		// 	s.EXPECT().DeleteURLByUser(gomock.Any(), gomock.Any()).Return(error(nil))
+
+		// 	d.Receive(context.Background(), url, userID.String())
+
+		// 	d.test.mutex.Lock()
+		// 	assert.Equal(t, maxItemMsg, <-d.test.msg)
+		// 	d.test.mutex.Unlock()
+		// })
 		t.Run("timer", func(t *testing.T) {
-			d, s := testInitDeleter(t)
-
-
 			url := make([]string, 40)
 			for i := range url {
 				url[i] = randSeq(10)
@@ -93,7 +118,9 @@ func TestStartWorker(t *testing.T) {
 
 			d.Receive(context.Background(), url, userID.String())
 
+			d.test.mutex.Lock()
 			assert.Equal(t, timeoutMsg, <-d.test.msg)
+			d.test.mutex.Unlock()
 		},
 		)
 	})
@@ -106,4 +133,3 @@ func randSeq(n int) string {
 	}
 	return string(b)
 }
-

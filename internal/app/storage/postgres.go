@@ -109,3 +109,29 @@ func (d *DBStorage) DeleteURLByUser(ctx context.Context, urls []string) error {
 func (d *DBStorage) GetDBPing(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }
+
+// GetCount получить количество URL и пользователей
+func (d *DBStorage) GetCount(ctx context.Context) (int, int, error) {
+	var countURL int
+	var countUser int
+
+	tx, err := d.db.Begin()
+	if err != nil {
+		return 0, 0, fmt.Errorf("ошибка при старте транзакции: %w", err)
+	}
+	defer tx.Rollback()
+
+	err = tx.QueryRowContext(ctx, "select count(distinct shorturl) counturl from shorturl;").Scan(&countURL)
+	if err != nil {
+		return 0, 0, fmt.Errorf("ошибка получения количества url: %w", err)
+	}
+	err = tx.QueryRowContext(ctx, "select count(distinct user_created) countuser from shorturl;").Scan(&countUser)
+	if err != nil {
+		return 0, 0, fmt.Errorf("ошибка получения количества user: %w", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return 0, 0, err
+	}
+	return countURL, countUser, nil
+}

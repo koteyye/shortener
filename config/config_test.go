@@ -45,14 +45,14 @@ func TestConfig_GetConfig(t *testing.T) {
 			cfg, err := GetConfig()
 			wantCfg := &Config{
 				Server: &Server{
-					Listen: defaultServer,
+					Listen:  defaultServer,
 					BaseURL: "/",
 				},
 				Shortener: &Shortener{
 					Listen: defaultShortenerHost,
 				},
 				FileStoragePath: defaultFileStoragePath,
-				JWTSecretKey: deafultSecretKey,
+				JWTSecretKey:    deafultSecretKey,
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, wantCfg, cfg)
@@ -72,14 +72,14 @@ func TestConfig_GetConfig(t *testing.T) {
 			cfg, err := GetConfig()
 			wantCfg := &Config{
 				Server: &Server{
-					Listen: "localhost:8083",
+					Listen:  "localhost:8083",
 					BaseURL: "/",
 				},
 				Shortener: &Shortener{
 					Listen: defaultShortenerHost,
 				},
 				FileStoragePath: defaultFileStoragePath,
-				JWTSecretKey: deafultSecretKey,
+				JWTSecretKey:    deafultSecretKey,
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, wantCfg, cfg)

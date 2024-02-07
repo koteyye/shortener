@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+
 	models "github.com/koteyye/shortener/internal/app/models"
 )
 
@@ -61,6 +62,22 @@ func (m *MockURLStorage) DeleteURLByUser(arg0 context.Context, arg1 []string) er
 func (mr *MockURLStorageMockRecorder) DeleteURLByUser(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLByUser", reflect.TypeOf((*MockURLStorage)(nil).DeleteURLByUser), arg0, arg1)
+}
+
+// GetCount mocks base method.
+func (m *MockURLStorage) GetCount(arg0 context.Context) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCount", arg0)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetCount indicates an expected call of GetCount.
+func (mr *MockURLStorageMockRecorder) GetCount(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCount", reflect.TypeOf((*MockURLStorage)(nil).GetCount), arg0)
 }
 
 // GetDBPing mocks base method.
