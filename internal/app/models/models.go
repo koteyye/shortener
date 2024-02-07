@@ -22,6 +22,7 @@ type URLList struct {
 	Msg      string `json:"msg,omitempty"`
 }
 
+// Stats структура для статистики
 type Stats struct {
 	URLs  int `json:"urls"`
 	Users int `json:"users"`
