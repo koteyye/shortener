@@ -38,7 +38,7 @@ type unitTest struct {
 
 // StartDeleter запускает воркер
 func InitDeleter(storage storage.URLStorage, logger *zap.SugaredLogger) *Deleter {
-	return &Deleter{URL: make(chan string, maxURL), storage: storage, logger: logger, mutex: sync.Mutex{}, ticker: time.NewTicker(time.Second * 10), test: &unitTest{isTest: false}}
+	return &Deleter{URL: make(chan string, maxURL), storage: storage, logger: logger, mutex: sync.Mutex{}, ticker: time.NewTicker(time.Second * 3), test: &unitTest{isTest: false}}
 }
 
 // Receive принимает URL в обработку
@@ -59,7 +59,7 @@ func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*mod
 			if strings.Contains(urls[idxURLItem].ShortURL, delURLS[idx]) {
 				d.mutex.Lock()
 				if len(d.URL) == 0 {
-					d.ticker.Reset(time.Second * 10)
+					d.ticker.Reset(time.Second * 3)
 				}
 				d.URL <- delURLS[idx]
 				if len(d.URL) == maxURL {
