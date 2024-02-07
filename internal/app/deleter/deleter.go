@@ -53,8 +53,8 @@ func (d *Deleter) Receive(ctx context.Context, delURLS []string, userID string) 
 
 func (d *Deleter) validateURL(ctx context.Context, delURLS []string, urls []*models.URLList) {
 	for idx := range delURLS {
-		for idxUrlItem := range urls {
-			if strings.Contains(urls[idxUrlItem].ShortURL, delURLS[idx]) {
+		for idxURLItem := range urls {
+			if strings.Contains(urls[idxURLItem].ShortURL, delURLS[idx]) {
 				d.mutex.Lock()
 				if len(d.URL) == 0 {
 					d.ticker.Reset(time.Second * 10)

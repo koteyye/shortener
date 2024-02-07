@@ -25,7 +25,7 @@ func TestDeleter_InitDeleter(t *testing.T) {
 		testRepo := storage.URLHandler{}
 		deleter := InitDeleter(testRepo, &zap.SugaredLogger{})
 
-		wantDeleter := &Deleter{URL: make(chan string, 50), storage: testRepo, logger: &zap.SugaredLogger{}, mutex: sync.Mutex{}, ticker: time.NewTicker(10 * time.Second), test: &unitTest{isTest: false}}
+		wantDeleter := &Deleter{storage: testRepo, logger: &zap.SugaredLogger{}, mutex: sync.Mutex{}, test: &unitTest{isTest: false}}
 
 		assert.Equal(t, wantDeleter.storage, deleter.storage)
 		assert.Equal(t, wantDeleter.logger, deleter.logger)

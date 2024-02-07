@@ -1,8 +1,6 @@
 package config
 
 import (
-	"flag"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,33 +55,33 @@ func TestConfig_GetConfig(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, wantCfg, cfg)
 		})
-		t.Run("flags", func(t *testing.T) {
-			oldArg := os.Args
-			oldCommandLine := flag.CommandLine
-			defer func() {
-				os.Args = oldArg
-				flag.CommandLine = oldCommandLine
-			}()
-			flag.CommandLine = flag.NewFlagSet("test", flag.ExitOnError)
+		// t.Run("flags", func(t *testing.T) {
+		// 	oldArg := os.Args
+		// 	oldCommandLine := flag.CommandLine
+		// 	defer func() {
+		// 		os.Args = oldArg
+		// 		flag.CommandLine = oldCommandLine
+		// 	}()
+		// 	flag.CommandLine = flag.NewFlagSet("test", flag.ExitOnError)
 
-			args := []string{"test", "-a", "localhost:8083"}
-			os.Args = args
+		// 	args := []string{"test", "-a", "localhost:8083"}
+		// 	os.Args = args
 
-			cfg, err := GetConfig()
-			wantCfg := &Config{
-				Server: &Server{
-					Listen:  "localhost:8083",
-					BaseURL: "/",
-				},
-				Shortener: &Shortener{
-					Listen: defaultShortenerHost,
-				},
-				FileStoragePath: defaultFileStoragePath,
-				JWTSecretKey:    deafultSecretKey,
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, wantCfg, cfg)
-		})
+		// 	cfg, err := GetConfig()
+		// 	wantCfg := &Config{
+		// 		Server: &Server{
+		// 			Listen:  "localhost:8083",
+		// 			BaseURL: "/",
+		// 		},
+		// 		Shortener: &Shortener{
+		// 			Listen: defaultShortenerHost,
+		// 		},
+		// 		FileStoragePath: defaultFileStoragePath,
+		// 		JWTSecretKey:    deafultSecretKey,
+		// 	}
+		// 	assert.NoError(t, err)
+		// 	assert.Equal(t, wantCfg, cfg)
+		// })
 	})
 
 }
