@@ -51,7 +51,7 @@ func TestHandlers_NewHandlers(t *testing.T) {
 			services:  &testService,
 			logger:    &zap.SugaredLogger{},
 			secretKey: testSecretKey,
-			delURLch: testDelCh,
+			delURLch:  testDelCh,
 			subnet:    &net.IPNet{},
 		}, handler)
 	})

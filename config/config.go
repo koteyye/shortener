@@ -28,6 +28,7 @@ type Config struct {
 	Pprof           string
 	EnbaleHTTPS     bool
 	TrustSubnet     string
+	GRPCServer      string
 }
 
 // Server сервер конфигурации сервиса.
@@ -52,6 +53,7 @@ type ENVValue struct {
 	EnbaleHTTPS     bool   `env:"ENABLE_HTTPS"`
 	ConfigPath      string `env:"CONFIG"`
 	TrustSubnet     string `env:"TRUST_SUBNET"`
+	GRPCPort        string `env:"GRPC_PORT"`
 }
 
 // cliFlag флаги командной строки.
@@ -65,6 +67,7 @@ type cliFlag struct {
 	flagHTTPS       bool
 	flagConfig      string
 	flagTrustSubnet string
+	flagGRPCPort    string
 }
 
 func initFlags() *cliFlag {
@@ -99,6 +102,9 @@ func initFlags() *cliFlag {
 	if isFlagPassed("t") {
 		flag.StringVar(&cliFlags.flagTrustSubnet, "t", "", "trusted subnt")
 	}
+	if isFlagPassed("g") {
+		flag.StringVar(&cliFlags.flagGRPCPort, "g", "", "GRPC port")
+	}
 	flag.Parse()
 	return cliFlags
 }
@@ -121,6 +127,7 @@ type fileConfig struct {
 	Pprof           string `json:"pprof"`
 	EnableHTTPS     bool   `json:"enable_https"`
 	TrustSubnet     string `json:"trusted_subnet"`
+	GRPCPort        string `json:"grpc_port"`
 }
 
 // ConfigFromFile получить конфиг из файла
@@ -177,6 +184,7 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag, fileVal *fileConfig
 		Pprof:           calcVal(envVal.Pprof, cliFlags.flagPprof, fileVal.Pprof, ""),
 		EnbaleHTTPS:     calcHTTPS(envVal.EnbaleHTTPS, cliFlags.flagHTTPS, fileVal.EnableHTTPS),
 		TrustSubnet:     calcVal(envVal.TrustSubnet, cliFlags.flagTrustSubnet, fileVal.TrustSubnet, ""),
+		GRPCServer:      calcVal(envVal.GRPCPort, cliFlags.flagGRPCPort, fileVal.GRPCPort, ""),
 	}
 
 }

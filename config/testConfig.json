@@ -3,5 +3,6 @@
     "base_url": "http://localhost",
     "file_storage_path": "/path/to/file.db",
     "database_dsn": "postgresql://postgres:postgres@localhost:5432/shortener?sslmode=disable",
-    "enable_https": true
+    "enable_https": true,
+    "grpc_port": "3200"
 } 

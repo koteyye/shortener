@@ -17,7 +17,7 @@ import (
 type Handlers struct {
 	services  *service.Service
 	logger    *zap.SugaredLogger
-	delURLch chan deleter.DeleteURL
+	delURLch  chan deleter.DeleteURL
 	secretKey string
 	subnet    *net.IPNet
 }

@@ -60,8 +60,8 @@ func (d *Deleter) StartWorker(ctx context.Context) {
 	}
 }
 
-func (d *Deleter)validateURL(inURLs []string, userID string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+func (d *Deleter) validateURL(inURLs []string, userID string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var validURL []string

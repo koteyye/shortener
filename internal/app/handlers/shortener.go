@@ -209,7 +209,6 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 	go func() {
 		h.delURLch <- deleter.DeleteURL{URL: urls, UserID: userID}
 	}()
-	
 
 	res.WriteHeader(http.StatusAccepted)
 }

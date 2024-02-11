@@ -16,11 +16,11 @@ import (
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func TestDeleter_StartWorker(t *testing.T) {
-    t.Run("send_batch_on_os_signal", func(t *testing.T) {
-        c := gomock.NewController(t)
-        defer c.Finish()
+	t.Run("send_batch_on_os_signal", func(t *testing.T) {
+		c := gomock.NewController(t)
+		defer c.Finish()
 
-        repo := mock_storage.NewMockURLStorage(c)
+		repo := mock_storage.NewMockURLStorage(c)
 
 		url := make([]string, 40)
 		for i := range url {
@@ -33,36 +33,36 @@ func TestDeleter_StartWorker(t *testing.T) {
 				Number:   i,
 				URL:      "http://localhost:8080/" + randSeq(10),
 				ShortURL: url[i],
-				}
 			}
+		}
 
 		repo.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
-        repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
+		repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
 
 		delCh := make(chan DeleteURL)
-        d := &Deleter{
-            storage: repo,
-            ticker:  time.NewTicker(10 * time.Second),
-            delURLch:     delCh,
-        }
+		d := &Deleter{
+			storage:  repo,
+			ticker:   time.NewTicker(10 * time.Second),
+			delURLch: delCh,
+		}
 
 		userID, err := uuid.NewRandom()
 		assert.NoError(t, err)
 		testDel := DeleteURL{URL: url, UserID: userID.String()}
 
-        go func() {
-            d.delURLch <- testDel
-        }()
+		go func() {
+			d.delURLch <- testDel
+		}()
 
-        ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-        defer cancel()
-        d.StartWorker(ctx)
-    })
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		d.StartWorker(ctx)
+	})
 	t.Run("send_batch_on_timeout", func(t *testing.T) {
 		c := gomock.NewController(t)
-        defer c.Finish()
+		defer c.Finish()
 
-        repo := mock_storage.NewMockURLStorage(c)
+		repo := mock_storage.NewMockURLStorage(c)
 
 		url := make([]string, 40)
 		for i := range url {
@@ -75,29 +75,29 @@ func TestDeleter_StartWorker(t *testing.T) {
 				Number:   i,
 				URL:      "http://localhost:8080/" + randSeq(10),
 				ShortURL: url[i],
-				}
 			}
+		}
 
 		repo.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
-        repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
+		repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
 
 		delCh := make(chan DeleteURL)
-        d := &Deleter{
-            storage: repo,
-            ticker:  time.NewTicker(2 * time.Second),
-            delURLch:     delCh,
-        }
+		d := &Deleter{
+			storage:  repo,
+			ticker:   time.NewTicker(2 * time.Second),
+			delURLch: delCh,
+		}
 
 		userID, err := uuid.NewRandom()
 		assert.NoError(t, err)
 		testDel := DeleteURL{URL: url, UserID: userID.String()}
 
-        go func() {
-            d.delURLch <- testDel
-        }()
+		go func() {
+			d.delURLch <- testDel
+		}()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
-        defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 		d.StartWorker(ctx)
 	})
 }
