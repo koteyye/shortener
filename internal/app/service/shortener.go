@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/koteyye/shortener/internal/app/models"
@@ -39,6 +40,9 @@ func (s Service) GetDBPing(ctx context.Context) error {
 
 // GetOriginURL получение оригинального URL.
 func (s Service) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
+	if strings.Contains(shortURL, s.shortener.Listen) {
+		shortURL = strings.TrimLeft(shortURL, s.shortener.Listen)
+	}
 	res, err := s.storage.GetURL(ctx, shortURL)
 	if err != nil {
 		return "", err

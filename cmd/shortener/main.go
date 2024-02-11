@@ -20,8 +20,8 @@ import (
 	"github.com/koteyye/shortener/internal/app/handlers"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
-	"github.com/koteyye/shortener/server"
 	pb "github.com/koteyye/shortener/proto"
+	"github.com/koteyye/shortener/server"
 
 	"net/http"
 	_ "net/http/pprof"
@@ -178,18 +178,18 @@ func runGRPCServer(ctx context.Context, cfg *config.Config, handler *grpchandler
 	s := grpc.NewServer()
 	go func() {
 		listen, err := net.Listen("tcp", cfg.GRPCServer)
-	if err != nil {
-		log.Fatalw(err.Error(), "event", "search port for server")
-	}
-	pb.RegisterShortenerServer(s, handler)
+		if err != nil {
+			log.Fatalw(err.Error(), "event", "search port for server")
+		}
+		pb.RegisterShortenerServer(s, handler)
 
-	log.Infof("start grpc server on %v port", cfg.GRPCServer)
+		log.Infof("start grpc server on %v port", cfg.GRPCServer)
 
-	if err := s.Serve(listen); err != nil {
-		log.Fatalw(err.Error(), "event", "listen serve")
-	}
+		if err := s.Serve(listen); err != nil {
+			log.Fatalw(err.Error(), "event", "listen serve")
+		}
 	}()
-	
+
 	<-ctx.Done()
 
 	log.Info("shutting down grpc server")

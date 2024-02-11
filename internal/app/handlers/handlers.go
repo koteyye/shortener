@@ -47,7 +47,6 @@ func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 		})
 		r.Get("/:id", h.GetOriginalURL)
 		r.Get("/ping", h.Ping)
-		r.Get("/testGraceful", h.graceful)
 		r.Route("/api", func(r chi.Router) {
 			r.Route("/shorten", func(r chi.Router) {
 				r.Post("/", h.JSONShortenURL)

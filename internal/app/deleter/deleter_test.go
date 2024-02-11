@@ -8,9 +8,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/koteyye/shortener/internal/app/models"
 	mock_storage "github.com/koteyye/shortener/internal/app/storage/mocks"
-	"github.com/stretchr/testify/assert"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

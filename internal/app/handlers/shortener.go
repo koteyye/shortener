@@ -238,13 +238,3 @@ func (h Handlers) GetStats(res http.ResponseWriter, r *http.Request) {
 	res.WriteHeader(http.StatusOK)
 	res.Write(rawResponse)
 }
-
-func (h Handlers) graceful(w http.ResponseWriter, r *http.Request) {
-	_, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	ticker := time.NewTicker(10 * time.Second)
-
-	<-ticker.C
-	w.WriteHeader(http.StatusOK)
-}
