@@ -96,9 +96,10 @@ func main() {
 	if err != nil {
 		log.Fatalw(err.Error(), "event", "init storage")
 	}
-	worker := deleter.InitDeleter(storages, &log)
+	delURLch := make(chan deleter.DeleteURL)
+	worker := deleter.InitDeleter(delURLch, storages, &log)
 	services := service.NewService(storages, cfg.Shortener, &log)
-	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, worker, subnet)
+	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, delURLch, subnet)
 
 	if cfg.Pprof != "" {
 		g.Go(func() error {

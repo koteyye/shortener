@@ -44,13 +44,14 @@ const (
 func TestHandlers_NewHandlers(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		testService := service.Service{}
-		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey, &deleter.Deleter{}, &net.IPNet{})
+		testDelCh := make(chan deleter.DeleteURL)
+		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey, testDelCh, &net.IPNet{})
 
 		assert.Equal(t, &Handlers{
 			services:  &testService,
 			logger:    &zap.SugaredLogger{},
 			secretKey: testSecretKey,
-			worker:    &deleter.Deleter{},
+			delURLch: testDelCh,
 			subnet:    &net.IPNet{},
 		}, handler)
 	})
@@ -71,7 +72,7 @@ func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockURLStorage) {
 	defer logger.Sync()
 	log := *logger.Sugar()
 
-	handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{}, &net.IPNet{})
+	handler := NewHandlers(service, &log, testSecretKey, make(chan deleter.DeleteURL), &net.IPNet{})
 
 	return handler, repo
 }
@@ -349,7 +350,7 @@ func TestHandlers_GetStats(t *testing.T) {
 			subnet, err := cfg.CIDR()
 			assert.NoError(t, err)
 
-			handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{}, subnet)
+			handler := NewHandlers(service, &log, testSecretKey, make(chan deleter.DeleteURL), subnet)
 
 			r := httptest.NewRequest(http.MethodGet, stats, nil)
 			w := httptest.NewRecorder()

@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 
+	"github.com/koteyye/shortener/internal/app/deleter"
 	"github.com/koteyye/shortener/internal/app/models"
 )
 
@@ -205,7 +206,10 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 
 	urls, _ := mapRequestDeleteByUser(r)
 
-	go h.worker.Receive(urls, userID)
+	go func() {
+		h.delURLch <- deleter.DeleteURL{URL: urls, UserID: userID}
+	}()
+	
 
 	res.WriteHeader(http.StatusAccepted)
 }

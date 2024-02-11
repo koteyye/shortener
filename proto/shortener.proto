@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package shortener;
+
+option go_package = "shortener/proto";
+
+message NullRequest {}
+
+message GetStatsResponse {
+    int32 url = 1;
+    int32 users = 2;
+}
+
+message PingResponse {
+    string msg = 1;
+}
+
+message AddURLRequest {
+    string url = 1;
+}
+
+message AddURLResponse {
+    string result = 1;
+}
+
+message GetURLByUserResponse {
+    string correlation_id = 1;
+    int32 id = 2;
+    string msg = 3;
+    string original_url = 4;
+    string short_url = 5;
+}
+
+message DeleteURLsRequest {
+    repeated string urls = 1;
+}
+
+message DeleteURLsResponse {
+    string msg = 1;
+}
+
+message BatchRequest {
+    string correlation_id = 1;
+    string original_url = 2;
+}
+
+message BatchResponse {
+    string correlation_id = 1;
+    string short_url = 2;
+}
+
+message GetOriginalURLRequest {
+    string short_url = 1;
+}
+
+message GetOriginalURLResponse {
+    string original_url = 1;
+}
+
+service Shortener {
+    rpc AddURL(AddURLRequest) returns (AddURLResponse);
+    rpc GetuRLByUserID(NullRequest) returns (GetURLByUserResponse);
+    rpc DeleteURLs(DeleteURLsRequest) returns (DeleteURLsResponse);
+    rpc Batch(BatchRequest) returns (BatchResponse);
+    rpc GetOriginalURL(GetOriginalURLRequest) returns (GetOriginalURLResponse);
+    rpc GetStats(NullRequest) returns (GetStatsResponse);
+    rpc Ping(NullRequest) returns (PingResponse); 
+}
