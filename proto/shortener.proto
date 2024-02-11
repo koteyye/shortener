@@ -59,7 +59,7 @@ message GetOriginalURLResponse {
 
 service Shortener {
     rpc AddURL(AddURLRequest) returns (AddURLResponse);
-    rpc GetuRLByUserID(NullRequest) returns (GetURLByUserResponse);
+    rpc GetURLByUserID(NullRequest) returns (GetURLByUserResponse);
     rpc DeleteURLs(DeleteURLsRequest) returns (DeleteURLsResponse);
     rpc Batch(BatchRequest) returns (BatchResponse);
     rpc GetOriginalURL(GetOriginalURLRequest) returns (GetOriginalURLResponse);

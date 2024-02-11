@@ -2,9 +2,11 @@ package grpchandlers
 
 import (
 	"context"
+	"errors"
 	"net"
 
 	"github.com/koteyye/shortener/internal/app/deleter"
+	"github.com/koteyye/shortener/internal/app/models"
 	"github.com/koteyye/shortener/internal/app/service"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -24,6 +26,7 @@ type GRPCHandlers struct {
 	pb.ShortenerServer
 }
 
+// InitGRPCHandlers возвращает новый экземпляр GRPCHandlers
 func InitGRPCHandlers(service *service.Service, logger *zap.SugaredLogger, delURLch chan deleter.DeleteURL, secretKey string, subnet *net.IPNet) *GRPCHandlers {
 	return &GRPCHandlers{
 		services:  service,
@@ -34,6 +37,7 @@ func InitGRPCHandlers(service *service.Service, logger *zap.SugaredLogger, delUR
 	}
 }
 
+// AddURL добавляет сокращенный URL
 func (g *GRPCHandlers) AddURL(ctx context.Context, in *pb.AddURLRequest) (*pb.AddURLResponse, error) {
 	var userID string
 
@@ -52,4 +56,15 @@ func (g *GRPCHandlers) AddURL(ctx context.Context, in *pb.AddURLRequest) (*pb.Ad
 		return nil, status.Errorf(codes.Internal, "can't add url: %s", err.Error())
 	}
 	return &pb.AddURLResponse{Result: result}, nil
+}
+
+func (g *GRPCHandlers) GetURL(ctx context.Context, in *pb.GetOriginalURLRequest) (*pb.GetOriginalURLResponse, error) {
+	result, err := g.services.GetOriginURL(ctx, in.ShortUrl)
+	if err != nil {
+		if errors.Is(err, models.ErrDeleted) {
+			return nil, status.Errorf(codes.NotFound, "url is deleted: %s", err.Error())
+		}
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	return &pb.GetOriginalURLResponse{OriginalUrl: result}, nil
 }
