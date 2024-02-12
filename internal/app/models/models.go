@@ -20,6 +20,7 @@ type URLList struct {
 	URL      string `json:"original_url,omitempty" db:"originalurl"`
 	ShortURL string `json:"short_url,omitempty" db:"shorturl"`
 	Msg      string `json:"msg,omitempty"`
+	UserID   string `db:"user_create"`
 }
 
 // Stats структура для статистики

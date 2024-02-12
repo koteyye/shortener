@@ -57,3 +57,11 @@ func (u *URLMap) GetURL(_ context.Context, k string) (*models.SingleURL, error) 
 func (u *URLMap) GetCount(_ context.Context) (int, int, error) {
 	return 0, 0, models.ErrMockNotSupported
 }
+
+// BatchAddURL множественное добавление сокращенных URL в хранилище.
+func (u *URLMap) BatchAddURL(_ context.Context, urlList []*models.URLList, _ string) error {
+	for i := range urlList {
+		u.storage.Store(urlList[i].ShortURL, urlList[i].URL)
+	}
+	return nil
+}

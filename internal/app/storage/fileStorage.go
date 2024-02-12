@@ -88,6 +88,46 @@ func (f *FileStorage) AddURL(_ context.Context, s string, k string, _ string) er
 	return nil
 }
 
+// BatchAddURL множественное добавление URL в файловое хранилище.
+func (f *FileStorage) BatchAddURL(_ context.Context, urlList []*models.URLList, _ string) error {
+	var id int
+
+	reader, err := f.fileReader.NewReader()
+	if err != nil {
+		return fmt.Errorf("err reader: %w", err)
+	}
+	defer reader.Close()
+
+	readFile, err := reader.ReadShortURL()
+	if err != nil {
+		return fmt.Errorf("err read file: %w", err)
+	}
+	if readFile == nil {
+		id = 1
+	} else {
+		id = readFile.Number + 1
+	}
+
+	writer, err := f.fileWriter.NewWriter()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	defer writer.Close()
+
+	for i := range urlList {
+		err = writer.WriteShortURL(models.URLList{
+			Number:   id,
+			ShortURL: urlList[i].ShortURL,
+			URL:      urlList[i].URL,
+		})
+		if err != nil {
+			return fmt.Errorf("err write shortURL: %w", err)
+		}
+	}
+	return nil
+}
+
 // GetURL получение URL из файлового хранилища.
 func (f *FileStorage) GetURL(_ context.Context, k string) (*models.SingleURL, error) {
 	reader, err := f.fileReader.NewReader()

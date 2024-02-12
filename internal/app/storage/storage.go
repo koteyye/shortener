@@ -21,6 +21,7 @@ type URLStorage interface {
 	GetURLByUser(context.Context, string) ([]*models.URLList, error)
 	DeleteURLByUser(context.Context, []string) error
 	GetCount(context.Context) (int, int, error)
+	BatchAddURL(context.Context, []*models.URLList, string) error
 }
 
 // URLHandler структура обработчика URL

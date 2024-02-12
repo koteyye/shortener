@@ -9,7 +9,6 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/koteyye/shortener/internal/app/deleter"
@@ -42,21 +41,14 @@ func InitGRPCHandlers(service *service.Service, logger *zap.SugaredLogger, delUR
 
 // AddURL добавляет сокращенный URL
 func (g *GRPCHandlers) AddURL(ctx context.Context, in *pb.AddURLRequest) (*pb.AddURLResponse, error) {
-	var userID string
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		val := md.Get("user")
-		if len(val) > 0 {
-			userID = val[0]
-		} else if len(val) == 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "user id is empty")
-		}
-	}
+	userID := ctx.Value(userIDKey).(string)
 
 	result, err := g.services.AddShortURL(ctx, in.Url, userID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "can't add url: %s", err.Error())
+		if models.MapConflict(err) {
+			return nil, status.Error(codes.AlreadyExists, "в бд уже есть такой url")
+		}
+		return nil, status.Errorf(codes.Internal, "при добавлении url возникла ошибка")
 	}
 	return &pb.AddURLResponse{Result: result}, nil
 }
@@ -66,7 +58,7 @@ func (g *GRPCHandlers) GetOriginalURL(ctx context.Context, in *pb.GetOriginalURL
 	result, err := g.services.GetOriginURL(ctx, in.ShortUrl)
 	if err != nil {
 		if errors.Is(err, models.ErrDeleted) {
-			return nil, status.Errorf(codes.NotFound, "url is deleted: %s", err.Error())
+			return nil, status.Errorf(codes.NotFound, "url удален: %s", err.Error())
 		}
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -75,17 +67,7 @@ func (g *GRPCHandlers) GetOriginalURL(ctx context.Context, in *pb.GetOriginalURL
 
 // Batch добавляет множество сокращенных URL
 func (g *GRPCHandlers) Batch(ctx context.Context, in *pb.BatchRequest) (*pb.BatchResponse, error) {
-	var userID string
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		val := md.Get("user")
-		if len(val) > 0 {
-			userID = val[0]
-		} else if len(val) == 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "user id is empty")
-		}
-	}
+	userID := ctx.Value(userIDKey).(string)
 
 	batch := make([]*models.URLList, len(in.Batch))
 	for i, item := range in.Batch {
@@ -99,7 +81,10 @@ func (g *GRPCHandlers) Batch(ctx context.Context, in *pb.BatchRequest) (*pb.Batc
 	}
 	list, err := g.services.Batch(ctx, batch, userID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		if models.MapConflict(err) {
+			return nil, status.Error(codes.AlreadyExists, "в бд уже есть такие url")
+		}
+		return nil, status.Error(codes.Internal, "при добавлении url возникла ошибка")
 	}
 	res := make([]*pb.BatchResponseItem, len(list))
 	for i := range list {
@@ -110,22 +95,12 @@ func (g *GRPCHandlers) Batch(ctx context.Context, in *pb.BatchRequest) (*pb.Batc
 
 // GetURLByUserID возвращает все URL пользователя
 func (g *GRPCHandlers) GetURLByUserID(ctx context.Context, in *pb.NullRequest) (*pb.GetURLByUserResponse, error) {
-	var userID string
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		val := md.Get("user")
-		if len(val) > 0 {
-			userID = val[0]
-		} else if len(val) == 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "user id is empty")
-		}
-	}
+	userID := ctx.Value(userIDKey).(string)
 
 	list, err := g.services.GetURLByUser(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "the user hasn't urls")
+			return nil, status.Error(codes.NotFound, "у пользователя нет url")
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -157,17 +132,7 @@ func (g *GRPCHandlers) GetStats(ctx context.Context, in *pb.NullRequest) (*pb.Ge
 
 // DeleteURLs запрос на удаление сокращенных URL
 func (g *GRPCHandlers) DeleteURLs(ctx context.Context, in *pb.DeleteURLsRequest) (*pb.DeleteURLsResponse, error) {
-	var userID string
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		val := md.Get("user")
-		if len(val) > 0 {
-			userID = val[0]
-		} else if len(val) == 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "user id is empty")
-		}
-	}
+	userID := ctx.Value(userIDKey).(string)
 
 	go func() {
 		g.delURLch <- deleter.DeleteURL{URL: in.Urls, UserID: userID}

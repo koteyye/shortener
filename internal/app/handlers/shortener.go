@@ -72,7 +72,7 @@ func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	list, err := h.services.Batch(ctx, input, userID)
 	if err != nil {
 		if !errors.Is(err, models.ErrDuplicate) {
-			mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
+			mapErrorToResponse(res, r, http.StatusConflict, "в бд уже есть такие URL")
 			return
 		}
 	}

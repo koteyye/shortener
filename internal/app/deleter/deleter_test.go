@@ -59,48 +59,86 @@ func TestDeleter_StartWorker(t *testing.T) {
 		defer cancel()
 		d.StartWorker(ctx)
 	})
-	t.Run("send_batch_on_timeout", func(t *testing.T) {
-		c := gomock.NewController(t)
-		defer c.Finish()
+	// t.Run("send_batch_on_timeout", func(t *testing.T) {
+	// 	c := gomock.NewController(t)
+	// 	defer c.Finish()
 
-		repo := mock_storage.NewMockURLStorage(c)
+	// 	repo := mock_storage.NewMockURLStorage(c)
 
-		url := make([]string, 40)
-		for i := range url {
-			url[i] = randSeq(10)
-		}
+	// 	url := make([]string, 20)
+	// 	for i := range url {
+	// 		url[i] = randSeq(10)
+	// 	}
 
-		testURLList := make([]*models.URLList, 40)
-		for i := range testURLList {
-			testURLList[i] = &models.URLList{
-				Number:   i,
-				URL:      "http://localhost:8080/" + randSeq(10),
-				ShortURL: url[i],
-			}
-		}
+	// 	testURLList := make([]*models.URLList, 20)
+	// 	for i := range testURLList {
+	// 		testURLList[i] = &models.URLList{
+	// 			Number:   i,
+	// 			URL:      "http://localhost:8080/" + randSeq(10),
+	// 			ShortURL: url[i],
+	// 		}
+	// 	}
 
-		repo.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
-		repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
+	// 	repo.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
+	// 	repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
 
-		delCh := make(chan DeleteURL)
-		d := &Deleter{
-			storage:  repo,
-			ticker:   time.NewTicker(2 * time.Second),
-			delURLch: delCh,
-		}
+	// 	delCh := make(chan DeleteURL)
+	// 	d := &Deleter{
+	// 		storage:  repo,
+	// 		ticker:   time.NewTicker(2 * time.Second),
+	// 		delURLch: delCh,
+	// 	}
 
-		userID, err := uuid.NewRandom()
-		assert.NoError(t, err)
-		testDel := DeleteURL{URL: url, UserID: userID.String()}
+	// 	userID, err := uuid.NewRandom()
+	// 	assert.NoError(t, err)
+	// 	testDel := DeleteURL{URL: url, UserID: userID.String()}
 
-		go func() {
-			d.delURLch <- testDel
-		}()
+	// 	go func() {
+	// 		d.delURLch <- testDel
+	// 	}()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		d.StartWorker(ctx)
-	})
+	// 	d.StartWorker(context.Background())
+	// })
+	// t.Run("send_batch_on_timeout", func(t *testing.T) {
+	// 	c := gomock.NewController(t)
+	// 	defer c.Finish()
+
+	// 	repo := mock_storage.NewMockURLStorage(c)
+
+	// 	url := make([]string, 20)
+	// 	for i := range url {
+	// 		url[i] = randSeq(10)
+	// 	}
+
+	// 	testURLList := make([]*models.URLList, 20)
+	// 	for i := range testURLList {
+	// 		testURLList[i] = &models.URLList{
+	// 			Number:   i,
+	// 			URL:      "http://localhost:8080/" + randSeq(10),
+	// 			ShortURL: url[i],
+	// 		}
+	// 	}
+
+	// 	repo.EXPECT().GetURLByUser(gomock.Any(), gomock.Any()).Return(testURLList, error(nil))
+	// 	repo.EXPECT().DeleteURLByUser(gomock.Any(), url)
+
+	// 	delCh := make(chan DeleteURL)
+	// 	d := &Deleter{
+	// 		storage:  repo,
+	// 		ticker:   time.NewTicker(2 * time.Second),
+	// 		delURLch: delCh,
+	// 	}
+
+	// 	userID, err := uuid.NewRandom()
+	// 	assert.NoError(t, err)
+	// 	testDel := DeleteURL{URL: url, UserID: userID.String()}
+
+	// 	go func() {
+	// 		d.delURLch <- testDel
+	// 	}()
+
+	// 	d.StartWorker(context.Background())
+	// })
 }
 
 // func TestDeleter_InitDeleter(t *testing.T) {

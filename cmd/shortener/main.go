@@ -175,7 +175,15 @@ func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handle
 }
 
 func runGRPCServer(ctx context.Context, cfg *config.Config, handler *grpchandlers.GRPCHandlers, log *zap.SugaredLogger) error {
-	s := grpc.NewServer()
+	opts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			handler.AuthInterceptor,
+			handler.LogInterceptor,
+			handler.SubnetInterceptor,
+		),
+	}
+
+	s := grpc.NewServer(opts...)
 	go func() {
 		listen, err := net.Listen("tcp", cfg.GRPCServer)
 		if err != nil {

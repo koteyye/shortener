@@ -50,12 +50,13 @@ func (d *Deleter) StartWorker(ctx context.Context) {
 			batch = append(batch, validURL...)
 			if len(batch) >= batchMaxLen {
 				d.storage.DeleteURLByUser(ctx, batch)
+				d.ticker.Reset(time.Second * 3)
 			}
 		case <-d.ticker.C:
 			if len(batch) > 0 {
 				d.storage.DeleteURLByUser(ctx, batch)
 			}
-
+			d.ticker.Reset(time.Second * 3)
 		}
 	}
 }
