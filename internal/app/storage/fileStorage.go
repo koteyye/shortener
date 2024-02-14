@@ -26,7 +26,7 @@ func NewFileStorage(filepath string) *FileStorage {
 }
 
 // DeleteURLByUser удаление URL текущего пользователя (не поддерживается).
-func (f *FileStorage) DeleteURLByUser(_ context.Context, _ chan string) error {
+func (f *FileStorage) DeleteURLByUser(_ context.Context, _ []string) error {
 	return models.ErrMockNotSupported
 }
 
@@ -43,6 +43,11 @@ func (f *FileStorage) GetShortURL(_ context.Context, _ string) (string, error) {
 // GetDBPing проверка подключения к БД (не поддерживается).
 func (f *FileStorage) GetDBPing(_ context.Context) error {
 	return models.ErrFileNotSupported
+}
+
+// GetCount получить количество URL и пользователей (не поддерживается)
+func (f *FileStorage) GetCount(_ context.Context) (int, int, error) {
+	return 0, 0, models.ErrFileNotSupported
 }
 
 // AddURL добавление URL в файловое хранилище.

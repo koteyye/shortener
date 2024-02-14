@@ -9,7 +9,9 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "email": "koteyye@yandex.ru"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -32,6 +34,28 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/internal/stats": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Запрос для получение статистики по сервису, доступен только из доверенной подсети",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Stats"
+                            }
                         }
                     }
                 }
@@ -92,7 +116,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.AllURLs"
+                                "$ref": "#/definitions/models.URLList"
                             }
                         }
                     },
@@ -237,17 +261,14 @@ const docTemplate = `{
                 }
             }
         },
-        "models.AllURLs": {
+        "models.Stats": {
             "type": "object",
             "properties": {
-                "id": {
+                "urls": {
                     "type": "integer"
                 },
-                "original_url": {
-                    "type": "string"
-                },
-                "short_url": {
-                    "type": "string"
+                "users": {
+                    "type": "integer"
                 }
             }
         },
@@ -257,7 +278,13 @@ const docTemplate = `{
                 "correlation_id": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "msg": {
+                    "type": "string"
+                },
+                "original_url": {
                     "type": "string"
                 },
                 "short_url": {
@@ -265,17 +292,26 @@ const docTemplate = `{
                 }
             }
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "\"Группа запросов состояния сервиса\"",
+            "name": "Info"
+        },
+        {
+            "name": "Shortener"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8081",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Shortener",
+	Description:      "Сервис для сокращения URL.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

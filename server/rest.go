@@ -7,7 +7,6 @@ import (
 
 	"github.com/kabukky/httpscerts"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -46,20 +45,6 @@ func (s *Server) Run(enableHTTPS bool, host string, handler http.Handler) error 
 		return s.httpServer.ListenAndServeTLS(certFile, keyFile)
 	}
 	return s.httpServer.ListenAndServe()
-}
-
-func serverTLS(server *http.Server) *http.Server {
-	tlsManager := &autocert.Manager{
-		Cache:      autocert.DirCache("chache-dir"),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("koteyyeshortener.ru", "wwww.koteyyeshortener.ru"),
-	}
-
-	return &http.Server{
-		Addr:      server.Addr,
-		Handler:   server.Handler,
-		TLSConfig: tlsManager.TLSConfig(),
-	}
 }
 
 // Shutdown отключает сервер.

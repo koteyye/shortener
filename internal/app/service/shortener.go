@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -87,18 +88,13 @@ func (s Service) GetURLByUser(ctx context.Context, userID string) ([]*models.URL
 	return allURLs, err
 }
 
-// DeleteURLByUser удаление URL по списку
-func (s Service) DeleteURLByUser(ctx context.Context, urls []string, userID string) {
-	doneCh := make(chan struct{})
-
-	urlListByUser, err := s.GetURLByUser(ctx, userID)
+// GetStats получает значения для статистики из Storage
+func (s Service) GetStats(ctx context.Context) (*models.Stats, error) {
+	countURL, countUser, err := s.storage.GetCount(ctx)
 	if err != nil {
-		s.logger.Infow(err.Error(), "event:", "get url by user")
+		return nil, errors.New("can't get stats from storage")
 	}
-	validatedChanel := validateUser(doneCh, urlListByUser, urls)
-	urlCh := fanIn(doneCh, validatedChanel)
-
-	s.storage.DeleteURLByUser(ctx, urlCh)
+	return &models.Stats{URLs: countURL, Users: countUser}, nil
 }
 
 func generateUnitKey() string {

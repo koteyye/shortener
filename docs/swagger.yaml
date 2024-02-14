@@ -1,29 +1,37 @@
+basePath: /
 definitions:
   handlers.errorJSON:
     properties:
       Message:
         type: string
     type: object
-  models.AllURLs:
+  models.Stats:
     properties:
-      id:
+      urls:
         type: integer
-      original_url:
-        type: string
-      short_url:
-        type: string
+      users:
+        type: integer
     type: object
   models.URLList:
     properties:
       correlation_id:
         type: string
+      id:
+        type: integer
       msg:
+        type: string
+      original_url:
         type: string
       short_url:
         type: string
     type: object
+host: localhost:8081
 info:
-  contact: {}
+  contact:
+    email: koteyye@yandex.ru
+  description: Сервис для сокращения URL.
+  title: Shortener
+  version: "1.0"
 paths:
   /:
     post:
@@ -51,6 +59,21 @@ paths:
       summary: Запрос на получение оригинального URL
       tags:
       - Shortener
+  /api/internal/stats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Stats'
+            type: array
+      summary: Запрос для получение статистики по сервису, доступен только из доверенной
+        подсети
+      tags:
+      - Info
   /api/shorten:
     post:
       consumes:
@@ -101,7 +124,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.AllURLs'
+              $ref: '#/definitions/models.URLList'
             type: array
         "204":
           description: No Content
@@ -163,3 +186,7 @@ paths:
       tags:
       - Info
 swagger: "2.0"
+tags:
+- description: '"Группа запросов состояния сервиса"'
+  name: Info
+- name: Shortener

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -11,21 +12,6 @@ import (
 
 	"github.com/koteyye/shortener/internal/app/models"
 )
-
-// @Title Shortener
-// @Description Сервис для сокращения URL.
-// @Version 1.0
-
-// @Contact.email koteyye@yandex.ru
-
-// @BasePath /
-// @Host localhost:8081
-
-// @Tag.name Info
-// @Tag.description "Группа запросов состояния сервиса"
-
-// @Tag.name Shortener
-// @Tag.desctiption "Группа запросов для сокращения URL"
 
 // ShortenURL godoc
 // @Tags Shortener
@@ -179,7 +165,7 @@ func (h Handlers) JSONShortenURL(res http.ResponseWriter, r *http.Request) {
 // @Tags Shortener
 // @Summary Запрос на получение всех сокращенных URL текущего пользователя
 // @Produce json
-// @Success 200 {array}  models.AllURLs
+// @Success 200 {array}  models.URLList
 // @Failure 204 {object} errorJSON
 // @Failure 400 {object} errorJSON
 // @Failure 500 {object} errorJSON
@@ -219,7 +205,43 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 
 	urls, _ := mapRequestDeleteByUser(r)
 
-	go h.services.DeleteURLByUser(context.Background(), urls, userID)
+	go h.worker.Receive(urls, userID)
 
 	res.WriteHeader(http.StatusAccepted)
+}
+
+// GetStats godoc
+// @Tags Info
+// @Summary Запрос для получение статистики по сервису, доступен только из доверенной подсети
+// @Produce json
+// @Success 200 {array} models.Stats
+// Failure 403
+// Failure 400
+// @Router /api/internal/stats [get]
+func (h Handlers) GetStats(res http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	counts, err := h.services.GetStats(ctx)
+	if err != nil {
+		mapErrorToJSONResponse(res, http.StatusBadRequest, err.Error())
+		return
+	}
+	rawResponse, err := json.Marshal(counts)
+	if err != nil {
+		mapErrorToJSONResponse(res, http.StatusBadRequest, err.Error())
+	}
+	res.Header().Add("Content-Type", ctApplicationJSON)
+	res.WriteHeader(http.StatusOK)
+	res.Write(rawResponse)
+}
+
+func (h Handlers) graceful(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	ticker := time.NewTicker(10 * time.Second)
+
+	<-ticker.C
+	w.WriteHeader(http.StatusOK)
 }

@@ -1,8 +1,15 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "Сервис для сокращения URL.",
+        "title": "Shortener",
+        "contact": {
+            "email": "koteyye@yandex.ru"
+        },
+        "version": "1.0"
     },
+    "host": "localhost:8081",
+    "basePath": "/",
     "paths": {
         "/": {
             "post": {
@@ -21,6 +28,28 @@
                         "description": "Bad Request",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/internal/stats": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Запрос для получение статистики по сервису, доступен только из доверенной подсети",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Stats"
+                            }
                         }
                     }
                 }
@@ -81,7 +110,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.AllURLs"
+                                "$ref": "#/definitions/models.URLList"
                             }
                         }
                     },
@@ -226,17 +255,14 @@
                 }
             }
         },
-        "models.AllURLs": {
+        "models.Stats": {
             "type": "object",
             "properties": {
-                "id": {
+                "urls": {
                     "type": "integer"
                 },
-                "original_url": {
-                    "type": "string"
-                },
-                "short_url": {
-                    "type": "string"
+                "users": {
+                    "type": "integer"
                 }
             }
         },
@@ -246,7 +272,13 @@
                 "correlation_id": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "msg": {
+                    "type": "string"
+                },
+                "original_url": {
                     "type": "string"
                 },
                 "short_url": {
@@ -254,5 +286,14 @@
                 }
             }
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "\"Группа запросов состояния сервиса\"",
+            "name": "Info"
+        },
+        {
+            "name": "Shortener"
+        }
+    ]
 }

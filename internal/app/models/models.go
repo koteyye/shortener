@@ -22,6 +22,12 @@ type URLList struct {
 	Msg      string `json:"msg,omitempty"`
 }
 
+// Stats структура для статистики
+type Stats struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
+}
+
 // Validate валидация списка с оригинальным URL.
 func (o *URLList) Validate() error {
 	if o.ID == "" {

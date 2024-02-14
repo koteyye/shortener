@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net"
 	"os"
+	"strings"
 
 	"github.com/caarlos0/env/v6"
 )
@@ -25,6 +27,7 @@ type Config struct {
 	JWTSecretKey    string
 	Pprof           string
 	EnbaleHTTPS     bool
+	TrustSubnet     string
 }
 
 // Server сервер конфигурации сервиса.
@@ -48,18 +51,65 @@ type ENVValue struct {
 	Pprof           string `env:"PPROF"`
 	EnbaleHTTPS     bool   `env:"ENABLE_HTTPS"`
 	ConfigPath      string `env:"CONFIG"`
+	TrustSubnet     string `env:"TRUST_SUBNET"`
 }
 
 // cliFlag флаги командной строки.
 type cliFlag struct {
-	flagJWT      string
-	flagAddress  string
-	flagShorten  string
-	flagFilePath string
-	flagDSN      string
-	flagPprof    string
-	flagHTTPS    bool
-	flagConfig   string
+	flagJWT         string
+	flagAddress     string
+	flagShorten     string
+	flagFilePath    string
+	flagDSN         string
+	flagPprof       string
+	flagHTTPS       bool
+	flagConfig      string
+	flagTrustSubnet string
+}
+
+func initFlags() *cliFlag {
+	cliFlags := &cliFlag{}
+	if isFlagPassed("a") {
+		flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
+	}
+	if isFlagPassed("b") {
+		flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
+	}
+	if isFlagPassed("f") {
+		flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
+	}
+	if isFlagPassed("d") {
+		flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
+	}
+	if isFlagPassed("j") {
+		flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
+	}
+	if isFlagPassed("p") {
+		flag.StringVar(&cliFlags.flagPprof, "p", "", "pprof address")
+	}
+	if isFlagPassed("s") {
+		flag.BoolVar(&cliFlags.flagHTTPS, "s", false, "https")
+	}
+	if isFlagPassed("c") {
+		flag.StringVar(&cliFlags.flagConfig, "c", "", "config path")
+	}
+	if isFlagPassed("config") {
+		flag.StringVar(&cliFlags.flagConfig, "config", "", "config path")
+	}
+	if isFlagPassed("t") {
+		flag.StringVar(&cliFlags.flagTrustSubnet, "t", "", "trusted subnt")
+	}
+	flag.Parse()
+	return cliFlags
+}
+
+func isFlagPassed(name string) bool {
+	for _, arg := range os.Args {
+		if strings.Index(arg, "-"+name) == 0 && (strings.Index(arg, "=") == len("-"+name) || strings.Index(arg, "=") == 0) {
+			return true
+		}
+	}
+	return false
 }
 
 type fileConfig struct {
@@ -70,6 +120,7 @@ type fileConfig struct {
 	JWTSecretKey    string `json:"JWTSecretKey"`
 	Pprof           string `json:"pprof"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustSubnet     string `json:"trusted_subnet"`
 }
 
 // ConfigFromFile получить конфиг из файла
@@ -85,19 +136,15 @@ func (c *fileConfig) ConfigFromFile(filepath string) error {
 	return nil
 }
 
+// CIDR получение *IPNet из конфига
+func (c *Config) CIDR() (*net.IPNet, error) {
+	_, subnet, err := net.ParseCIDR(c.TrustSubnet)
+	return subnet, err
+}
+
 // GetConfig получить конфигурацию приложения
 func GetConfig() (*Config, error) {
-	cliFlags := &cliFlag{}
-	flag.StringVar(&cliFlags.flagAddress, "a", "", "server address flag")
-	flag.StringVar(&cliFlags.flagShorten, "b", "", "shorten URL")
-	flag.StringVar(&cliFlags.flagFilePath, "f", "", "file path")
-	flag.StringVar(&cliFlags.flagDSN, "d", "", "dsn")
-	flag.StringVar(&cliFlags.flagJWT, "j", "", "jwt secret key")
-	flag.StringVar(&cliFlags.flagPprof, "p", "", "pprof address")
-	flag.BoolVar(&cliFlags.flagHTTPS, "s", false, "https")
-	flag.StringVar(&cliFlags.flagConfig, "c", "", "config path")
-	flag.StringVar(&cliFlags.flagConfig, "config", "", "config path")
-	flag.Parse()
+	cliFlags := initFlags()
 
 	var envVal ENVValue
 	if err := env.Parse(&envVal); err != nil {
@@ -129,6 +176,7 @@ func mapEnvFlagToConfig(envVal *ENVValue, cliFlags *cliFlag, fileVal *fileConfig
 		JWTSecretKey:    calcVal(envVal.JWTSecretKey, cliFlags.flagJWT, fileVal.JWTSecretKey, deafultSecretKey),
 		Pprof:           calcVal(envVal.Pprof, cliFlags.flagPprof, fileVal.Pprof, ""),
 		EnbaleHTTPS:     calcHTTPS(envVal.EnbaleHTTPS, cliFlags.flagHTTPS, fileVal.EnableHTTPS),
+		TrustSubnet:     calcVal(envVal.TrustSubnet, cliFlags.flagTrustSubnet, fileVal.TrustSubnet, ""),
 	}
 
 }

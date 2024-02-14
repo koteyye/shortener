@@ -19,7 +19,8 @@ type URLStorage interface {
 	GetDBPing(ctx context.Context) error
 	GetShortURL(context.Context, string) (string, error)
 	GetURLByUser(context.Context, string) ([]*models.URLList, error)
-	DeleteURLByUser(context.Context, chan string) error
+	DeleteURLByUser(context.Context, []string) error
+	GetCount(context.Context) (int, int, error)
 }
 
 // URLHandler структура обработчика URL

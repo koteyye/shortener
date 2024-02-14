@@ -23,7 +23,7 @@ func (u *URLMap) GetURLByUser(_ context.Context, _ string) ([]*models.URLList, e
 }
 
 // DeleteURLByUser удаляет сокращенный URL из поступающего канала (не поддерживается).
-func (u *URLMap) DeleteURLByUser(_ context.Context, _ chan string) error {
+func (u *URLMap) DeleteURLByUser(_ context.Context, _ []string) error {
 	return models.ErrMockNotSupported
 }
 
@@ -51,5 +51,9 @@ func (u *URLMap) GetURL(_ context.Context, k string) (*models.SingleURL, error) 
 		return &models.SingleURL{}, models.ErrNotFound
 	}
 	return &models.SingleURL{URL: url.(string)}, nil
+}
 
+// GetCount получить количество URL и пользователей (не поддерживается)
+func (u *URLMap) GetCount(_ context.Context) (int, int, error) {
+	return 0, 0, models.ErrMockNotSupported
 }

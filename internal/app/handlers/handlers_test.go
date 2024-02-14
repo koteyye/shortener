@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/koteyye/shortener/config"
+	"github.com/koteyye/shortener/internal/app/deleter"
 	"github.com/koteyye/shortener/internal/app/service"
 
 	"github.com/golang/mock/gomock"
@@ -36,17 +38,20 @@ const (
 	urlListByUser = "/api/user/urls"
 	jsonShortener = "/api/shorten"
 	ping          = "/ping"
+	stats         = "/api/internal/stats"
 )
 
 func TestHandlers_NewHandlers(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		testService := service.Service{}
-		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey)
+		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey, &deleter.Deleter{}, &net.IPNet{})
 
 		assert.Equal(t, &Handlers{
 			services:  &testService,
 			logger:    &zap.SugaredLogger{},
 			secretKey: testSecretKey,
+			worker:    &deleter.Deleter{},
+			subnet:    &net.IPNet{},
 		}, handler)
 	})
 }
@@ -66,7 +71,7 @@ func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockURLStorage) {
 	defer logger.Sync()
 	log := *logger.Sugar()
 
-	handler := NewHandlers(service, &log, testSecretKey)
+	handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{}, &net.IPNet{})
 
 	return handler, repo
 }
@@ -321,6 +326,51 @@ func TestHandlers_GetOriginalURL(t *testing.T) {
 			h.GetOriginalURL(w, r.WithContext(ctx))
 
 			assert.Equal(t, http.StatusGone, w.Code)
+		})
+	})
+}
+
+func TestHandlers_GetStats(t *testing.T) {
+	t.Run("get stats", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			repo := mockservice.NewMockURLStorage(c)
+			service := service.NewService(repo, &config.Shortener{Listen: "http://localhost:8081"}, &zap.SugaredLogger{})
+
+			logger, err := zap.NewDevelopment()
+			if err != nil {
+				panic(err)
+			}
+			defer logger.Sync()
+			log := *logger.Sugar()
+			cfg := config.Config{TrustSubnet: "127.0.0.1/24"}
+			subnet, err := cfg.CIDR()
+			assert.NoError(t, err)
+
+			handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{}, subnet)
+
+			r := httptest.NewRequest(http.MethodGet, stats, nil)
+			w := httptest.NewRecorder()
+
+			repo.EXPECT().GetCount(gomock.Any()).Return(50, 20, error(nil))
+
+			handler.GetStats(w, r)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+		t.Run("failed", func(t *testing.T) {
+			h, s := testInitHandler(t)
+
+			r := httptest.NewRequest(http.MethodGet, stats, nil)
+			w := httptest.NewRecorder()
+
+			s.EXPECT().GetCount(gomock.Any()).Return(0, 0, errors.New("can't get stats from storage"))
+
+			h.GetStats(w, r)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
 		})
 	})
 }
