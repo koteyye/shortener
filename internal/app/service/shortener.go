@@ -6,30 +6,25 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/koteyye/shortener/internal/app/models"
 )
 
 // Batch сокращение множества URL.
-func (s Service) Batch(ctx context.Context, originalList []*models.URLList, userID string) ([]*models.URLList, error) {
-	var urllist []*models.URLList
-	for _, origin := range originalList {
-		short, err := s.AddShortURL(ctx, origin.URL, userID)
-		if err != nil {
-			if models.MapConflict(err) {
-				shortURL, err := s.GetShortURLFromOriginal(ctx, origin.URL)
-				if err != nil {
-					return nil, fmt.Errorf("ошибка при получении задублированного url: %v", err)
-				}
-				urllist = append(urllist, &models.URLList{ID: origin.ID, ShortURL: shortURL, Msg: models.ErrDuplicate.Error()})
-				continue
-			}
-			return nil, fmt.Errorf("ошибка при заполнении url list: %v", err)
-		}
-		urllist = append(urllist, &models.URLList{ID: origin.ID, ShortURL: short})
+func (s Service) Batch(ctx context.Context, urlList []*models.URLList, userID string) ([]*models.URLList, error) {
+	for i := range urlList {
+		urlList[i].ShortURL = generateUnitKey()
+		urlList[i].UserID = userID
 	}
-	return urllist, nil
+	if err := s.storage.BatchAddURL(ctx, urlList, userID); err != nil {
+		return nil, fmt.Errorf("ошибка при множественном добавлении url: %w", err)
+	}
+	for i := range urlList {
+		urlList[i].UserID = ""
+	}
+	return urlList, nil
 }
 
 // GetDBPing проверка подключения к БД.
@@ -39,6 +34,9 @@ func (s Service) GetDBPing(ctx context.Context) error {
 
 // GetOriginURL получение оригинального URL.
 func (s Service) GetOriginURL(ctx context.Context, shortURL string) (string, error) {
+	if strings.Contains(shortURL, s.shortener.Listen) {
+		shortURL = strings.TrimLeft(shortURL, s.shortener.Listen)
+	}
 	res, err := s.storage.GetURL(ctx, shortURL)
 	if err != nil {
 		return "", err

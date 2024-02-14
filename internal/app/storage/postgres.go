@@ -70,6 +70,15 @@ func (d *DBStorage) AddURL(ctx context.Context, shortURL string, originalURL str
 	return nil
 }
 
+// BatchAddURL множественное добавление URL в базу.
+func (d *DBStorage) BatchAddURL(ctx context.Context, urlList []*models.URLList, userID string) error {
+	_, err := d.db.NamedExecContext(ctx, "insert into shorturl (shorturl, originalurl, user_created) values (:shorturl, :originalurl, :user_create)", urlList)
+	if err != nil {
+		return fmt.Errorf("can't add URL to DB: %w", err)
+	}
+	return nil
+}
+
 // GetURL получить URL из базы.
 func (d *DBStorage) GetURL(ctx context.Context, shortURL string) (*models.SingleURL, error) {
 	var result models.SingleURL

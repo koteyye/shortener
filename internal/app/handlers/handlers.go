@@ -17,14 +17,14 @@ import (
 type Handlers struct {
 	services  *service.Service
 	logger    *zap.SugaredLogger
-	worker    *deleter.Deleter
+	delURLch  chan deleter.DeleteURL
 	secretKey string
 	subnet    *net.IPNet
 }
 
 // NewHandlers возвращает экземпляр http обработчика
-func NewHandlers(services *service.Service, logger *zap.SugaredLogger, secretKey string, worker *deleter.Deleter, subnet *net.IPNet) *Handlers {
-	return &Handlers{services: services, logger: logger, secretKey: secretKey, worker: worker, subnet: subnet}
+func NewHandlers(services *service.Service, logger *zap.SugaredLogger, secretKey string, delURLch chan deleter.DeleteURL, subnet *net.IPNet) *Handlers {
+	return &Handlers{services: services, logger: logger, secretKey: secretKey, delURLch: delURLch, subnet: subnet}
 }
 
 // InitRoutes инициализация роутов
@@ -47,7 +47,6 @@ func (h Handlers) InitRoutes(baseURL string) *chi.Mux {
 		})
 		r.Get("/:id", h.GetOriginalURL)
 		r.Get("/ping", h.Ping)
-		r.Get("/testGraceful", h.graceful)
 		r.Route("/api", func(r chi.Router) {
 			r.Route("/shorten", func(r chi.Router) {
 				r.Post("/", h.JSONShortenURL)

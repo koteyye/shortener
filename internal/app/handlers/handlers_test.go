@@ -39,18 +39,21 @@ const (
 	jsonShortener = "/api/shorten"
 	ping          = "/ping"
 	stats         = "/api/internal/stats"
+	testIP        = "127.0.0.1"
+	testSubnet    = "127.0.0.1/24"
 )
 
 func TestHandlers_NewHandlers(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		testService := service.Service{}
-		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey, &deleter.Deleter{}, &net.IPNet{})
+		testDelCh := make(chan deleter.DeleteURL)
+		handler := NewHandlers(&testService, &zap.SugaredLogger{}, testSecretKey, testDelCh, &net.IPNet{})
 
 		assert.Equal(t, &Handlers{
 			services:  &testService,
 			logger:    &zap.SugaredLogger{},
 			secretKey: testSecretKey,
-			worker:    &deleter.Deleter{},
+			delURLch:  testDelCh,
 			subnet:    &net.IPNet{},
 		}, handler)
 	})
@@ -71,7 +74,7 @@ func testInitHandler(t *testing.T) (*Handlers, *mockservice.MockURLStorage) {
 	defer logger.Sync()
 	log := *logger.Sugar()
 
-	handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{}, &net.IPNet{})
+	handler := NewHandlers(service, &log, testSecretKey, make(chan deleter.DeleteURL), &net.IPNet{})
 
 	return handler, repo
 }
@@ -104,36 +107,11 @@ func TestHandlers_Batch(t *testing.T) {
 			userID := uuid.NewString()
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 
-			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh", userID).Return(error(nil))
-			s.EXPECT().GetShortURL(gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh").Return(generateUnitKey(), error(nil))
+			s.EXPECT().BatchAddURL(gomock.Any(), gomock.Any(), gomock.Any()).Return(error(nil))
 
 			h.Batch(w, r.WithContext(ctx))
 
 			assert.Equal(t, http.StatusCreated, w.Code)
-		})
-		t.Run("conflict", func(t *testing.T) {
-			h, s := testInitHandler(t)
-
-			r := httptest.NewRequest(http.MethodPost, "/batch", strings.NewReader(testRequest))
-			r.Header.Add("Content-Type", ctApplicationJSON)
-			w := httptest.NewRecorder()
-
-			var testOriginURLList []*models.URLList
-			err := json.Unmarshal([]byte(testRequest), &testOriginURLList)
-			assert.NoError(t, err)
-
-			userID := uuid.NewString()
-			ctx := context.WithValue(r.Context(), userIDKey, userID)
-
-			testPQErr := &pq.Error{Code: models.PqDuplicateErr}
-
-			s.EXPECT().AddURL(gomock.Any(), gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh", userID).Return(error(testPQErr))
-			s.EXPECT().GetShortURL(gomock.Any(), "http://lcpjtoddpyyp.yandex/sjkhh").Return(generateUnitKey(), error(nil))
-
-			h.Batch(w, r.WithContext(ctx))
-
-			assert.Equal(t, http.StatusConflict, w.Code)
-			assert.Equal(t, ctApplicationJSON, w.Header().Get("Content-Type"))
 		})
 		t.Run("url_empty", func(t *testing.T) {
 			h, _ := testInitHandler(t)
@@ -345,11 +323,11 @@ func TestHandlers_GetStats(t *testing.T) {
 			}
 			defer logger.Sync()
 			log := *logger.Sugar()
-			cfg := config.Config{TrustSubnet: "127.0.0.1/24"}
+			cfg := config.Config{TrustSubnet: testSubnet}
 			subnet, err := cfg.CIDR()
 			assert.NoError(t, err)
 
-			handler := NewHandlers(service, &log, testSecretKey, &deleter.Deleter{}, subnet)
+			handler := NewHandlers(service, &log, testSecretKey, make(chan deleter.DeleteURL), subnet)
 
 			r := httptest.NewRequest(http.MethodGet, stats, nil)
 			w := httptest.NewRecorder()

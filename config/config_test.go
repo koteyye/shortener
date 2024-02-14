@@ -13,6 +13,7 @@ const (
 	testConfigPath  = "./testConfig.json"
 	testFileStorage = "/path/to/file.db"
 	testSecretKey   = "jpoifjewf4093fgu902fj9023jf092jfc023f"
+	testGRPCPort    = "3200"
 )
 
 func TestConfig_GetConfig(t *testing.T) {
@@ -35,6 +36,7 @@ func TestConfig_GetConfig(t *testing.T) {
 				FileStoragePath: testFileStorage,
 				JWTSecretKey:    testSecretKey,
 				EnbaleHTTPS:     true,
+				GRPCServer:      testGRPCPort,
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, wantCfg, cfg)

@@ -64,7 +64,7 @@ func (h Handlers) Logging(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(&lw, r)
 
-		duration := time.Since(start).Nanoseconds()
+		duration := time.Since(start).Milliseconds()
 		logItem, err := marshalJSON(&log{
 			URI:        r.RequestURI,
 			Method:     r.Method,

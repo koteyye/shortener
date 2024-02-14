@@ -12,12 +12,15 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 
 	"github.com/koteyye/shortener/config"
 	"github.com/koteyye/shortener/internal/app/deleter"
+	"github.com/koteyye/shortener/internal/app/grpchandlers"
 	"github.com/koteyye/shortener/internal/app/handlers"
 	"github.com/koteyye/shortener/internal/app/service"
 	"github.com/koteyye/shortener/internal/app/storage"
+	pb "github.com/koteyye/shortener/proto"
 	"github.com/koteyye/shortener/server"
 
 	"net/http"
@@ -96,9 +99,11 @@ func main() {
 	if err != nil {
 		log.Fatalw(err.Error(), "event", "init storage")
 	}
-	worker := deleter.InitDeleter(storages, &log)
+	delURLch := make(chan deleter.DeleteURL)
+	worker := deleter.InitDeleter(delURLch, storages, &log)
 	services := service.NewService(storages, cfg.Shortener, &log)
-	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, worker, subnet)
+	handler := handlers.NewHandlers(services, &log, cfg.JWTSecretKey, delURLch, subnet)
+	grpchandler := grpchandlers.InitGRPCHandlers(services, &log, delURLch, cfg.JWTSecretKey, subnet)
 
 	if cfg.Pprof != "" {
 		g.Go(func() error {
@@ -118,6 +123,13 @@ func main() {
 		worker.StartWorker(gCtx)
 		return nil
 	})
+
+	if cfg.GRPCServer != "" {
+		g.Go(func() error {
+			runGRPCServer(gCtx, cfg, grpchandler, &log)
+			return nil
+		})
+	}
 
 	if err = g.Wait(); err != nil {
 		log.Fatal(err)
@@ -158,6 +170,38 @@ func runServer(ctx context.Context, cfg *config.Config, handler *handlers.Handle
 	if err := restServer.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown: %w", err)
 	}
+
+	return nil
+}
+
+func runGRPCServer(ctx context.Context, cfg *config.Config, handler *grpchandlers.GRPCHandlers, log *zap.SugaredLogger) error {
+	opts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			handler.AuthInterceptor,
+			handler.LogInterceptor,
+			handler.SubnetInterceptor,
+		),
+	}
+
+	s := grpc.NewServer(opts...)
+	go func() {
+		listen, err := net.Listen("tcp", cfg.GRPCServer)
+		if err != nil {
+			log.Fatalw(err.Error(), "event", "search port for server")
+		}
+		pb.RegisterShortenerServer(s, handler)
+
+		log.Infof("start grpc server on %v port", cfg.GRPCServer)
+
+		if err := s.Serve(listen); err != nil {
+			log.Fatalw(err.Error(), "event", "listen serve")
+		}
+	}()
+
+	<-ctx.Done()
+
+	log.Info("shutting down grpc server")
+	s.GracefulStop()
 
 	return nil
 }

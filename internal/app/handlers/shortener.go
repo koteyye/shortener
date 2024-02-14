@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 
+	"github.com/koteyye/shortener/internal/app/deleter"
 	"github.com/koteyye/shortener/internal/app/models"
 )
 
@@ -71,7 +72,7 @@ func (h Handlers) Batch(res http.ResponseWriter, r *http.Request) {
 	list, err := h.services.Batch(ctx, input, userID)
 	if err != nil {
 		if !errors.Is(err, models.ErrDuplicate) {
-			mapErrorToResponse(res, r, http.StatusBadRequest, err.Error())
+			mapErrorToResponse(res, r, http.StatusConflict, "в бд уже есть такие URL")
 			return
 		}
 	}
@@ -205,7 +206,9 @@ func (h Handlers) DeleteURLsByUser(res http.ResponseWriter, r *http.Request) {
 
 	urls, _ := mapRequestDeleteByUser(r)
 
-	go h.worker.Receive(urls, userID)
+	go func() {
+		h.delURLch <- deleter.DeleteURL{URL: urls, UserID: userID}
+	}()
 
 	res.WriteHeader(http.StatusAccepted)
 }
@@ -234,14 +237,4 @@ func (h Handlers) GetStats(res http.ResponseWriter, r *http.Request) {
 	res.Header().Add("Content-Type", ctApplicationJSON)
 	res.WriteHeader(http.StatusOK)
 	res.Write(rawResponse)
-}
-
-func (h Handlers) graceful(w http.ResponseWriter, r *http.Request) {
-	_, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	ticker := time.NewTicker(10 * time.Second)
-
-	<-ticker.C
-	w.WriteHeader(http.StatusOK)
 }
